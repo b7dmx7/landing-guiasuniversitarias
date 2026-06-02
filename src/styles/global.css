@@ -83,7 +83,8 @@ button, input, select, textarea { font: inherit; }
 .eyebrow {
   display: inline-flex;
   width: fit-content;
-  align-items: center;
+  max-width: min(100%, 48rem);
+  align-items: flex-start;
   gap: 8px;
   padding: 7px 12px;
   border: 1px solid var(--line);
@@ -92,11 +93,14 @@ button, input, select, textarea { font: inherit; }
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 750;
+  line-height: 1.35;
 }
 .eyebrow::before {
   content: '';
+  flex: 0 0 auto;
   width: 8px;
   height: 8px;
+  margin-top: 0.42em;
   background: var(--ok);
   border-radius: 50%;
 }
