@@ -1,6 +1,10 @@
 name = "guias-universitarias-landing"
 main = "src/worker.ts"
 compatibility_date = "2026-05-30"
+routes = [
+  { pattern = "guiasuniversitarias.com", custom_domain = true },
+  { pattern = "www.guiasuniversitarias.com", custom_domain = true }
+]
 
 [assets]
 directory = "./dist"
