@@ -58,6 +58,16 @@ button, input, select, textarea { font: inherit; }
   object-fit: contain;
 }
 .nav { display: none; gap: 20px; color: var(--muted); font-size: 0.94rem; }
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+.header-actions .btn {
+  padding: 10px 14px;
+  white-space: nowrap;
+}
 
 .btn {
   display: inline-flex;
@@ -83,6 +93,19 @@ button, input, select, textarea { font: inherit; }
 }
 .btn-whatsapp:hover { background: #1ebe5d; border-color: #1ebe5d; }
 .btn-ghost { color: var(--accent); padding-inline: 4px; }
+
+@media (max-width: 520px) {
+  .header-inner { gap: 8px; }
+  .logo img {
+    width: min(150px, 38vw);
+    max-height: 38px;
+  }
+  .header-actions { gap: 6px; }
+  .header-actions .btn {
+    padding: 8px 9px;
+    font-size: 0.86rem;
+  }
+}
 
 .hero { padding: 32px 0 26px; }
 .hero-grid { display: grid; gap: 26px; align-items: center; }
