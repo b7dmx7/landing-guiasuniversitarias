@@ -4,8 +4,8 @@
   --ink: #1b1a17;
   --muted: #676057;
   --line: rgba(27, 26, 23, 0.14);
-  --accent: #154b7d;
-  --accent-2: #0f365a;
+  --accent: #0047ab;
+  --accent-2: #003b8f;
   --warm: #d8913c;
   --ok: #1f6f49;
   --shadow: 0 18px 50px rgba(31, 29, 24, 0.12);
@@ -72,7 +72,7 @@ button, input, select, textarea { font: inherit; }
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 .btn:hover { transform: translateY(-1px); }
-.btn-primary { background: var(--accent); color: white; box-shadow: 0 12px 28px rgba(21, 75, 125, 0.26); }
+.btn-primary { background: var(--accent); color: white; box-shadow: 0 12px 28px rgba(0, 71, 171, 0.28); }
 .btn-primary:hover { background: var(--accent-2); }
 .btn-secondary { background: rgba(255, 250, 241, 0.78); border-color: var(--line); color: var(--ink); }
 .btn-ghost { color: var(--accent); padding-inline: 4px; }
@@ -173,7 +173,7 @@ h1 {
   z-index: 2;
 }
 .cover-preview-plus img {
-  border: 2px solid rgba(21, 75, 125, 0.28);
+  border: 2px solid rgba(0, 71, 171, 0.28);
 }
 .cover-preview figcaption {
   margin-top: 8px;
@@ -207,7 +207,7 @@ h2 { margin: 8px 0 10px; font-size: clamp(1.9rem, 8vw, 3.3rem); letter-spacing: 
   box-shadow: 0 10px 28px rgba(31, 29, 24, 0.07);
 }
 .version-card { position: relative; display: grid; gap: 14px; }
-.version-card.recommended { border-color: rgba(21, 75, 125, 0.34); box-shadow: var(--shadow); }
+.version-card.recommended { border-color: rgba(0, 71, 171, 0.34); box-shadow: var(--shadow); }
 .version-media {
   width: min(178px, 58vw);
   justify-self: start;
@@ -234,7 +234,7 @@ h2 { margin: 8px 0 10px; font-size: clamp(1.9rem, 8vw, 3.3rem); letter-spacing: 
   aspect-ratio: 17 / 22;
 }
 .version-card.recommended .version-media {
-  border-color: rgba(21, 75, 125, 0.24);
+  border-color: rgba(0, 71, 171, 0.24);
   background: white;
 }
 .badge {
@@ -242,7 +242,7 @@ h2 { margin: 8px 0 10px; font-size: clamp(1.9rem, 8vw, 3.3rem); letter-spacing: 
   width: fit-content;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(21, 75, 125, 0.1);
+  background: rgba(0, 71, 171, 0.1);
   color: var(--accent);
   font-size: 0.8rem;
   font-weight: 850;
@@ -256,8 +256,8 @@ h2 { margin: 8px 0 10px; font-size: clamp(1.9rem, 8vw, 3.3rem); letter-spacing: 
 
 .benefit-card h3, .delivery-card h3 { margin: 0 0 8px; font-size: 1.08rem; }
 .story {
-  background: rgba(21, 75, 125, 0.08);
-  border-block: 1px solid rgba(21, 75, 125, 0.12);
+  background: rgba(0, 71, 171, 0.08);
+  border-block: 1px solid rgba(0, 71, 171, 0.12);
 }
 .story-card { background: var(--accent); color: white; border-radius: 32px; padding: 24px; }
 .story-card p { color: rgba(255,255,255,0.82); line-height: 1.7; }
