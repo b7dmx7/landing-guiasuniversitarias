@@ -1,0 +1,12 @@
+name = "guias-universitarias-landing"
+main = "src/worker.ts"
+compatibility_date = "2026-05-30"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+# Para activar captura de leads:
+# wrangler secret put LEADS_WEBHOOK_URL
+# El webhook puede ser Make, Zapier, Google Apps Script, Zoho Flow, etc.

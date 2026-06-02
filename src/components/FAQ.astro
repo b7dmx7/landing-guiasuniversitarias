@@ -1,0 +1,20 @@
+---
+import { faqs } from '../content/faq';
+---
+<section id="faq" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="kicker">Preguntas frecuentes</div>
+      <h2>Antes de escribir por WhatsApp.</h2>
+      <p class="lead">Estas respuestas reducen dudas repetidas y dejan WhatsApp para cerrar ventas o resolver casos específicos.</p>
+    </div>
+    <div class="faq-list">
+      {faqs.map((faq) => (
+        <details>
+          <summary>{faq.question}</summary>
+          <p>{faq.answer}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

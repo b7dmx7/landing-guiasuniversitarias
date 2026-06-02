@@ -1,0 +1,23 @@
+{
+  "name": "guias-universitarias-landing-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "worker:dev": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/check": "latest",
+    "astro": "latest",
+    "typescript": "latest",
+    "wrangler": "latest"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest"
+  }
+}

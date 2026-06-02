@@ -1,0 +1,23 @@
+---
+import { site, whatsappHref } from '../content/site';
+---
+<footer class="footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <p class="legal">{site.legalNotice}</p>
+    </div>
+    <div class="footer-links">
+      <a href="/privacidad">Privacidad</a>
+      <a href="/terminos">Términos</a>
+      <a href={site.facebookUrl} onclick="trackLandingEvent('click_facebook', {location: 'footer'})">Facebook</a>
+      <a href={whatsappHref()} onclick="trackLandingEvent('click_whatsapp', {location: 'footer'})">WhatsApp</a>
+    </div>
+  </div>
+  <div class="container footer-signature" aria-label="Mensaje principal">
+    <p class="signature-line signature-line-1"><span>Guía práctica</span></p>
+    <p class="signature-line signature-line-2"><span>para el examen</span></p>
+    <p class="signature-line signature-line-3"><span>más importante</span></p>
+    <p class="signature-line signature-line-4"><span>de tu vida</span></p>
+    <img src="/images/logo-guias-negro-web.png" alt={site.name} width="3544" height="915" loading="lazy" decoding="async" />
+  </div>
+</footer>

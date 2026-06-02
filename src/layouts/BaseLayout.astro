@@ -1,0 +1,32 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Guías Universitarias',
+  description = 'Guías físicas impresas para preparar el examen de admisión.'
+} = Astro.props;
+---
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#154b7d" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+    <script is:inline>
+      window.trackLandingEvent = function(name, payload) {
+        window.dispatchEvent(new CustomEvent('landing:event', { detail: { name, payload: payload || {} } }));
+        console.log('[landing:event]', name, payload || {});
+      };
+    </script>
+  </body>
+</html>

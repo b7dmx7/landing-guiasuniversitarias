@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { site } from '../../content/site';
+---
+<BaseLayout title="Términos | Guías Universitarias">
+  <Header />
+  <main class="placeholder-page">
+    <div class="container">
+      <h1>Términos de compra</h1>
+      <p class="hero-copy">Texto base. Sustituir por términos finales de pago, envío, entrega, cambios y reembolsos.</p>
+      <p>{site.legalNotice}</p>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>

@@ -1,0 +1,39 @@
+---
+import { product } from '../content/product';
+import { whatsappHref } from '../content/site';
+---
+<section id="versiones" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="kicker">Versiones</div>
+      <h2>Elige cómo quieres prepararte.</h2>
+      <p class="lead">Muestra los precios desde el inicio. Quien necesita preguntar puede escribir por WhatsApp; quien ya decidió debe poder avanzar al pago.</p>
+    </div>
+    <div class="pricing-grid">
+      {product.versions.map((version) => (
+        <article class:list={["card", "version-card", version.label && "recommended"]}>
+          {version.label && <span class="badge">{version.label}</span>}
+          <div class:list={["version-media", version.sampleImage && "version-media-combo"]}>
+            <img src={version.coverImage} alt={version.coverAlt} width="2550" height="3300" loading="lazy" decoding="async" />
+            {version.sampleImage && (
+              <img src={version.sampleImage} alt={version.sampleAlt} width="850" height="1100" loading="lazy" decoding="async" />
+            )}
+          </div>
+          <div>
+            <h3>{version.name}</h3>
+            <div class="price">{version.price}</div>
+          </div>
+          <p>{version.shortDescription}</p>
+          <p><strong>Ideal para:</strong> {version.idealFor}</p>
+          <ul class="feature-list">
+            {version.features.map((feature) => <li>{feature}</li>)}
+          </ul>
+          <div class="card-actions">
+            <a class="btn btn-primary" href={version.paymentUrl} onclick={`trackLandingEvent('click_buy_${version.id}')`}>Comprar {version.name.replace('Guía ', '')}</a>
+            <a class="btn btn-secondary" href={whatsappHref(`Hola, quiero información sobre la ${version.name} EXANI-II.`)} onclick="trackLandingEvent('click_whatsapp', {location: 'pricing'})">Preguntar por esta versión</a>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

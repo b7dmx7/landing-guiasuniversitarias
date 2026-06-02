@@ -1,0 +1,26 @@
+---
+import { site } from '../content/site';
+---
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="kicker">Entrega</div>
+      <h2>Producto físico, entrega clara.</h2>
+      <p class="lead">La logística debe quedar visible porque el cuadernillo se compra, se paga y se recibe.</p>
+    </div>
+    <div class="delivery-grid">
+      <article class="card delivery-card">
+        <h3>Envío nacional</h3>
+        <p>{site.shipping}. Confirma datos después del pago.</p>
+      </article>
+      <article class="card delivery-card">
+        <h3>Entrega personal</h3>
+        <p>Disponible en ciudades seleccionadas: {site.cities.join(', ')}. Ajusta esta lista con tus ciudades reales.</p>
+      </article>
+      <article class="card delivery-card">
+        <h3>Seguimiento humano</h3>
+        <p>Atención por WhatsApp Business para dudas, entrega, pago y seguimiento posterior.</p>
+      </article>
+    </div>
+  </div>
+</section>

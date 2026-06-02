@@ -1,0 +1,41 @@
+---
+import { product } from '../content/product';
+import { whatsappHref } from '../content/site';
+
+const classicVersion = product.versions.find((version) => version.id === 'clasica')!;
+const plusVersion = product.versions.find((version) => version.id === 'plus')!;
+---
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">Cuadernillo físico tamaño carta</span>
+      <h1 class="hero-title">
+        <span class="hero-title-line hero-title-line-1"><span>Guía práctica</span></span>
+        <span class="hero-title-line hero-title-line-2"><span>para el examen</span></span>
+        <span class="hero-title-line hero-title-line-3"><span>más importante</span></span>
+        <span class="hero-title-line hero-title-line-4"><span>de tu vida</span></span>
+      </h1>
+      <p class="hero-copy">{product.heroSubtitle}</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#versiones" onclick="trackLandingEvent('click_buy_hero')">Comprar guía</a>
+        <a class="btn btn-secondary" href={whatsappHref()} onclick="trackLandingEvent('click_whatsapp', {location: 'hero'})">Preguntar por WhatsApp</a>
+      </div>
+      <div class="trust-row">
+        {product.stats.map((item) => <span>{item}</span>)}
+      </div>
+    </div>
+    <div class="cover-card">
+      <div class="cover-pair" aria-label="Portadas de las guías Clásica y Plus">
+        <figure class="cover-preview cover-preview-classic">
+          <img src={classicVersion.coverImage} alt={classicVersion.coverAlt} width="2550" height="3300" decoding="async" />
+          <figcaption>Clásica</figcaption>
+        </figure>
+        <figure class="cover-preview cover-preview-plus">
+          <img src={plusVersion.coverImage} alt={plusVersion.coverAlt} width="2550" height="3300" decoding="async" />
+          <figcaption>Plus</figcaption>
+        </figure>
+      </div>
+      <p class="cover-note">Elige entre Guía Clásica y Guía Plus, ambas en formato físico para estudiar con lápiz, orden y práctica real.</p>
+    </div>
+  </div>
+</section>

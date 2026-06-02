@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 1100" role="img" aria-labelledby="title desc">
+  <title id="title">Pagina de muestra de la Guia Clasica</title>
+  <desc id="desc">Muestra de lectura con preguntas de identificacion de informacion.</desc>
+  <rect width="850" height="1100" fill="#fff"/>
+  <g fill="#111">
+    <text x="66" y="62" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">1.1.2 Texto 2</text>
+    <text x="66" y="86" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700">Lea el siguiente texto y responda las preguntas relacionadas</text>
+    <text x="425" y="122" text-anchor="middle" font-family="'Courier New', monospace" font-size="18" font-weight="700">El desvelo como merito escolar</text>
+
+    <g font-family="'Courier New', monospace" font-size="15" letter-spacing="-0.3">
+      <text x="66" y="152">Cada ciclo escolar aparece la misma escena: estudiantes con ojeras, cafe sobre el escritorio</text>
+      <text x="66" y="172">y una frase que casi se presume: "anoche no dormi nada, pero termine de estudiar".</text>
+      <text x="66" y="192">Resulta extrano que eso se diga con tanta naturalidad, o que incluso hasta se vea bien.</text>
+
+      <text x="66" y="230">En muchas escuelas y familias, desvelarse se entiende como compromiso, mientras que dormir</text>
+      <text x="66" y="250">casi parece sospechoso, como si descansar a tiempo fuera senal de flojera. Y ahi empieza</text>
+      <text x="66" y="270">el problema.</text>
+
+      <text x="66" y="310">Todavia se confunde el sacrificio visible con el aprendizaje real. Se admira al alumno que</text>
+      <text x="66" y="330">pasa la noche entera frente a sus apuntes, aunque al dia siguiente llegue agotado, sin poder</text>
+      <text x="66" y="350">leer y comprender bien o fallando en cosas simples. Se termina aplaudiendo mas la resistencia</text>
+      <text x="66" y="370">que la comprension. Del mismo modo muchos estudiantes sienten que al desvelarse antes de un</text>
+      <text x="66" y="390">examen, le ganan horas al tiempo. Y en cierto sentido si: avanzaron paginas, repasaron</text>
+      <text x="66" y="410">formulas, subrayaron definiciones. Pero una cosa es acumular horas y otra rendir bien.</text>
+
+      <text x="66" y="450">Aun asi, desvelarse conserva prestigio. Tal vez porque encaja con una idea muy arraigada</text>
+      <text x="66" y="470">del merito: la de que solo vale lo que cuesta mucho, aunque cueste mal. Bajo esa logica,</text>
+      <text x="66" y="490">organizarse con tiempo parece menos admirable que resolverlo todo a ultima hora.</text>
+
+      <text x="66" y="530">Ademas, no todos viven el desvelo de la misma manera. Para algunos jovenes, la noche no es</text>
+      <text x="66" y="550">un espacio libre. Hay quienes trabajan, cuidan a un familiar, pasan horas en traslados o</text>
+      <text x="66" y="570">ayudan en su casa. Cuando se repite que "si de verdad quieres, duermes menos", se olvida</text>
+      <text x="66" y="590">que el tiempo no esta repartido igual para todos.</text>
+
+      <text x="66" y="630">Tambien convendria revisar ciertas practicas escolares. No es raro que varias materias junten</text>
+      <text x="66" y="650">entregas en la misma semana o que se acumulen tareas mas pesadas para ocupar tiempo que</text>
+      <text x="66" y="670">para producir aprendizaje. Luego, cuando aparece el agotamiento, se interpreta como falta</text>
+      <text x="66" y="690">de caracter.</text>
+
+      <text x="66" y="730">La salida no esta en bajar el nivel academico, esta en exigir mejor: coordinar fechas,</text>
+      <text x="66" y="750">ensenar tecnicas de estudio, favorecer el trabajo constante y dejar de romantizar la noche</text>
+      <text x="66" y="770">en vela. Aprender no consiste en mantenerse despierto el mayor numero posible de horas,</text>
+      <text x="66" y="790">sino en usar bien la energia, la atencion y el tiempo disponible.</text>
+    </g>
+
+    <text x="66" y="850" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">1.1.2.1  Identificacion de informacion</text>
+    <text x="365" y="850" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="700">(texto argumentativo-periodistico)</text>
+
+    <g font-family="Arial, Helvetica, sans-serif" fill="#111">
+      <rect x="66" y="872" width="718" height="28" fill="none" stroke="#111" stroke-width="2"/>
+      <line x1="96" y1="872" x2="96" y2="900" stroke="#111" stroke-width="2"/>
+      <text x="76" y="893" font-size="16" font-weight="700">10</text>
+      <text x="106" y="892" font-size="16">Que idea critica principalmente el autor a lo largo del texto?</text>
+      <text x="82" y="920" font-size="13">A   Que el desvelo se vea como una muestra de compromiso escolar</text>
+      <text x="82" y="940" font-size="13">B   Que los examenes sean demasiado dificiles para la mayoria de los estudiantes</text>
+      <text x="82" y="960" font-size="13">C   Que las familias exijan demasiado rendimiento academico a los jovenes</text>
+
+      <rect x="66" y="982" width="718" height="28" fill="none" stroke="#111" stroke-width="2"/>
+      <line x1="96" y1="982" x2="96" y2="1010" stroke="#111" stroke-width="2"/>
+      <text x="76" y="1003" font-size="16" font-weight="700">11</text>
+      <text x="106" y="1002" font-size="16">Segun el texto, que se suele premiar equivocadamente?</text>
+      <text x="82" y="1030" font-size="13">A   La comprension profunda de los temas</text>
+      <text x="82" y="1050" font-size="13">B   La resistencia al cansancio</text>
+      <text x="82" y="1070" font-size="13">C   La capacidad de trabajar en equipo</text>
+    </g>
+  </g>
+</svg>

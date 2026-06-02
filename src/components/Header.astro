@@ -1,0 +1,17 @@
+---
+import { site, whatsappHref } from '../content/site';
+---
+<header class="header">
+  <div class="container header-inner">
+    <a class="logo" href="/" aria-label={site.name}>
+      <img src="/images/logo-guias-negro-web.png" alt={site.name} width="3544" height="915" />
+    </a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/guias/exani-ii#versiones">Versiones</a>
+      <a href="/guias/exani-ii#beneficios">Diferenciadores</a>
+      <a href="/guias/exani-ii#faq">Preguntas</a>
+      <a href="/articulos">Artículos</a>
+    </nav>
+    <a class="btn btn-secondary" href={whatsappHref()} onclick="trackLandingEvent('click_whatsapp', {location: 'header'})">WhatsApp</a>
+  </div>
+</header>

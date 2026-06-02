@@ -1,0 +1,86 @@
+---
+import { product } from '../content/product';
+---
+<section id="contacto" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="kicker">Contacto</div>
+      <h2>Déjanos tus datos.</h2>
+      <p class="lead">Úsalo para quienes todavía no compran, quieren entrega personal o necesitan confirmar algo antes de pagar.</p>
+    </div>
+    <form class="card form" id="lead-form">
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Nombre</label>
+          <input id="name" name="name" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="whatsapp">WhatsApp</label>
+          <input id="whatsapp" name="whatsapp" inputmode="tel" autocomplete="tel" required />
+        </div>
+        <div class="field">
+          <label for="email">Correo</label>
+          <input id="email" name="email" type="email" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="city">Ciudad</label>
+          <input id="city" name="city" autocomplete="address-level2" />
+        </div>
+        <div class="field">
+          <label for="state">Estado</label>
+          <input id="state" name="state" autocomplete="address-level1" />
+        </div>
+        <div class="field">
+          <label for="version">Versión</label>
+          <select id="version" name="version">
+            {product.versions.map((version) => <option value={version.id}>{version.name}</option>)}
+          </select>
+        </div>
+        <div class="field full">
+          <label for="delivery">Entrega</label>
+          <select id="delivery" name="delivery">
+            <option value="envio">Envío nacional</option>
+            <option value="entrega-personal">Entrega personal</option>
+            <option value="no-se">Todavía no sé</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="message">Mensaje</label>
+          <textarea id="message" name="message" placeholder="Duda, ciudad, universidad o fecha aproximada de examen"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary" type="submit">Enviar datos</button>
+      <p class="form-status" id="form-status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+<script>
+  const form = document.querySelector('#lead-form') as HTMLFormElement | null;
+  const status = document.querySelector('#form-status') as HTMLParagraphElement | null;
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    status!.textContent = 'Enviando...';
+
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+
+    (window as Window & { trackLandingEvent?: (name: string, payload?: Record<string, unknown>) => void })
+      .trackLandingEvent?.('submit_contact_form', payload);
+
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error('No se pudo enviar');
+
+      form.reset();
+      status!.textContent = 'Datos enviados. Te contactaremos por WhatsApp.';
+    } catch {
+      status!.textContent = 'No se pudo enviar el formulario. Escríbenos por WhatsApp.';
+    }
+  });
+</script>
