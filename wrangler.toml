@@ -2,8 +2,8 @@ name = "landing-guiasuniversitarias"
 main = "src/worker.ts"
 compatibility_date = "2026-05-30"
 routes = [
-  { pattern = "guiasuniversitarias.com", custom_domain = true },
-  { pattern = "www.guiasuniversitarias.com", custom_domain = true }
+  { pattern = "guiasuniversitarias.com/*", zone_name = "guiasuniversitarias.com" },
+  { pattern = "www.guiasuniversitarias.com/*", zone_name = "guiasuniversitarias.com" }
 ]
 
 [assets]
