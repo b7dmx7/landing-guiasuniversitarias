@@ -8,7 +8,7 @@ const plusVersion = product.versions.find((version) => version.id === 'plus')!;
 <section class="hero">
   <div class="container hero-grid">
     <div>
-      <span class="eyebrow">Cuadernillo físico tamaño carta con ejercicios de opción múltiple que te acercan al examen de admisión.</span>
+      <span class="eyebrow">No existe una solo versión del exámen, necesitas más que eso.</span>
       <h1 class="hero-title">
         <span class="hero-title-line hero-title-line-1"><span>Guía práctica</span></span>
         <span class="hero-title-line hero-title-line-2"><span>para el examen</span></span>
@@ -18,7 +18,7 @@ const plusVersion = product.versions.find((version) => version.id === 'plus')!;
       <p class="hero-copy">{product.heroSubtitle}</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="#versiones" onclick="trackLandingEvent('click_buy_hero')">Comprar guía</a>
-        <a class="btn btn-secondary" href={whatsappHref()} onclick="trackLandingEvent('click_whatsapp', {location: 'hero'})">Preguntar por WhatsApp</a>
+        <a class="btn btn-secondary btn-whatsapp" href={whatsappHref()} onclick="trackLandingEvent('click_whatsapp', {location: 'hero'})">Preguntar por WhatsApp</a>
       </div>
       <div class="trust-row">
         {product.stats.map((item) => <span>{item}</span>)}
