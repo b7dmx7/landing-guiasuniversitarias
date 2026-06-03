@@ -25,7 +25,7 @@ export const product = {
   stats: [
     'Cuadernillo físico tamaño carta',
     'Más de 300 reactivos',
-    'Envío sin costo a México'
+    'Envío gratis a todo México'
   ],
   versions: [
     {

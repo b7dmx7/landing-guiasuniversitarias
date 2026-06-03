@@ -3,12 +3,16 @@ import { product } from '../content/product';
 
 const classicVersion = product.versions.find((version) => version.id === 'clasica')!;
 const plusVersion = product.versions.find((version) => version.id === 'plus')!;
+const eyebrowPhrases = [
+  'No existe una solo versión del examen; necesitas más que eso.',
+  'Más de 300 reactivos inéditos'
+];
 ---
 <section class="hero">
   <div class="container hero-grid">
     <div>
       <span class="eyebrow">
-        <span class="eyebrow-text">No existe una solo versión del exámen, necesitas más que eso.</span>
+        <span class="eyebrow-text" data-eyebrow-rotator data-phrases={JSON.stringify(eyebrowPhrases)}>{eyebrowPhrases[0]}</span>
         <button class="theme-toggle theme-toggle-inline" type="button" data-theme-toggle aria-label="Cambiar tema">
           <span class="theme-toggle-icon" data-icon="moon" aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false">
@@ -49,3 +53,24 @@ const plusVersion = product.versions.find((version) => version.id === 'plus')!;
     </div>
   </div>
 </section>
+
+<script>
+  const eyebrowRotator = document.querySelector('[data-eyebrow-rotator]') as HTMLElement | null;
+  const reduceEyebrowMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (eyebrowRotator && !reduceEyebrowMotion) {
+    const phrases = JSON.parse(eyebrowRotator.dataset.phrases || '[]') as string[];
+    let phraseIndex = 0;
+
+    if (phrases.length > 1) {
+      window.setInterval(() => {
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        eyebrowRotator.classList.add('is-changing');
+        window.setTimeout(() => {
+          eyebrowRotator.textContent = phrases[phraseIndex];
+          eyebrowRotator.classList.remove('is-changing');
+        }, 180);
+      }, 3600);
+    }
+  }
+</script>

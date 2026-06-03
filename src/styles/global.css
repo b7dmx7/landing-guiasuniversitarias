@@ -225,7 +225,7 @@ button, input, select, textarea { font: inherit; }
 .hero-grid > * { min-width: 0; }
 .eyebrow {
   display: inline-flex;
-  width: fit-content;
+  width: min(100%, 48rem);
   max-width: min(100%, 48rem);
   align-items: center;
   gap: 8px;
@@ -240,6 +240,11 @@ button, input, select, textarea { font: inherit; }
 }
 .eyebrow-text {
   min-width: 0;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.eyebrow-text.is-changing {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 .eyebrow::before {
   content: '';
@@ -300,6 +305,12 @@ h1 {
   .hero-title-line-2 span { font-size: 11.6cqw; }
   .hero-title-line-3 span { font-size: 11.05cqw; }
   .hero-title-line-4 span { font-size: 17.85cqw; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eyebrow-text {
+    transition: none;
+  }
 }
 
 .hero-copy { color: var(--muted); font-size: 1.08rem; line-height: 1.65; margin: 0 0 20px; }
@@ -489,6 +500,9 @@ textarea { min-height: 116px; resize: vertical; }
 }
 .checkout-form {
   gap: 18px;
+}
+.checkout-form label {
+  font-weight: 500;
 }
 .checkout-step {
   display: grid;
