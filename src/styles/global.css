@@ -179,8 +179,19 @@ button, input, select, textarea { font: inherit; }
 .theme-toggle:hover { transform: translateY(-1px); }
 .theme-toggle-icon {
   display: block;
-  font-size: 1rem;
+  width: 18px;
+  height: 18px;
   line-height: 1;
+}
+.theme-toggle-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .theme-toggle [data-icon='sun'] { display: none; }
 .theme-toggle[data-current-theme='dark'] [data-icon='moon'] { display: none; }
@@ -239,7 +250,8 @@ button, input, select, textarea { font: inherit; }
   margin-left: auto;
 }
 .theme-toggle-inline .theme-toggle-icon {
-  font-size: 0.92rem;
+  width: 16px;
+  height: 16px;
 }
 h1 {
   margin: 16px 0 14px;

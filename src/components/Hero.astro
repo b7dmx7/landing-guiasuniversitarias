@@ -10,8 +10,17 @@ const plusVersion = product.versions.find((version) => version.id === 'plus')!;
       <span class="eyebrow">
         <span class="eyebrow-text">No existe una solo versión del exámen, necesitas más que eso.</span>
         <button class="theme-toggle theme-toggle-inline" type="button" data-theme-toggle aria-label="Cambiar tema">
-          <span class="theme-toggle-icon" data-icon="moon" aria-hidden="true">☾</span>
-          <span class="theme-toggle-icon" data-icon="sun" aria-hidden="true">☀</span>
+          <span class="theme-toggle-icon" data-icon="moon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M20 14.7A7.8 7.8 0 0 1 9.3 4a8.3 8.3 0 1 0 10.7 10.7Z" />
+            </svg>
+          </span>
+          <span class="theme-toggle-icon" data-icon="sun" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2.2M12 19.8V22M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2 12h2.2M19.8 12H22M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" />
+            </svg>
+          </span>
         </button>
       </span>
       <h1 class="hero-title">
