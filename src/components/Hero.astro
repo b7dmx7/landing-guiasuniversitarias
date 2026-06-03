@@ -1,6 +1,5 @@
 ---
 import { product } from '../content/product';
-import { whatsappHref } from '../content/site';
 
 const classicVersion = product.versions.find((version) => version.id === 'clasica')!;
 const plusVersion = product.versions.find((version) => version.id === 'plus')!;
@@ -16,10 +15,6 @@ const plusVersion = product.versions.find((version) => version.id === 'plus')!;
         <span class="hero-title-line hero-title-line-4"><span>de tu vida</span></span>
       </h1>
       <p class="hero-copy">{product.heroSubtitle}</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="#versiones" onclick="trackLandingEvent('click_buy_hero')">Comprar guía</a>
-        <a class="btn btn-secondary btn-whatsapp" href={whatsappHref()} onclick="trackLandingEvent('click_whatsapp', {location: 'hero'})">Preguntar por WhatsApp</a>
-      </div>
       <div class="trust-row">
         {product.stats.map((item) => <span>{item}</span>)}
       </div>
