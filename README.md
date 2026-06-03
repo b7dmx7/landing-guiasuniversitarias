@@ -29,8 +29,17 @@ npm install
 npm run dev
 npm run build
 npm run worker:dev
+npm run worker:dev:remote
 npm run deploy
 ```
+
+Para probar el formulario de compra con la D1 real de Cloudflare, usar:
+
+```bash
+npm run worker:dev:remote -- --port 8788
+```
+
+`npm run dev` levanta Astro en local, pero no ejecuta el Worker ni consulta D1.
 
 ## Antes de publicar
 

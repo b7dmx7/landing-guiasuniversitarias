@@ -8,6 +8,7 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "worker:dev": "npm run build && wrangler dev",
+    "worker:dev:remote": "npm run build && wrangler dev --remote",
     "deploy": "npm run build && wrangler deploy",
     "check": "astro check"
   },
