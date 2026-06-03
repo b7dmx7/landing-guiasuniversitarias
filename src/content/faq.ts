@@ -9,7 +9,7 @@ export const faqs = [
   },
   {
     question: '¿Qué diferencia hay entre Clásica y Plus?',
-    answer: 'La Clásica cubre el material base de práctica. La Plus está pensada para quien quiere más acompañamiento o recursos adicionales. Ajusta esta respuesta cuando definas la diferencia final.'
+    answer: 'La Clásica cubre el material base de práctica. La Plus está pensada para quien quiere más ejercicios, prioridad en las solicitudes de asistencia y su guía personalizada.'
   },
   {
     question: '¿Es material oficial de Ceneval?',
@@ -17,7 +17,7 @@ export const faqs = [
   },
   {
     question: '¿Qué pasa después de pagar?',
-    answer: 'Recibirás seguimiento para confirmar datos de entrega y continuar la atención por WhatsApp Business.'
+    answer: 'Recibirás seguimiento para confirmar datos de entrega y continuar la atención por WhatsApp atendido por un ser humano.'
   },
   {
     question: '¿Sirve para cualquier universidad?',
