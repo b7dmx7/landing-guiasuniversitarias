@@ -12,6 +12,7 @@ Publicar una landing funcional en horas, no días:
 4. Abrir WhatsApp Business con mensaje precargado.
 5. Capturar leads mediante formulario conectado a webhook.
 6. Dejar base limpia para futuras rutas: guías, exámenes, universidades y artículos.
+7. Preparar checkout sin VPS con Cloudflare Workers, D1 y Stripe.
 
 ## Stack
 
@@ -19,6 +20,7 @@ Publicar una landing funcional en horas, no días:
 - TypeScript
 - CSS mobile-first propio
 - Cloudflare Workers + Static Assets
+- Cloudflare D1 para catálogo de códigos postales y pedidos futuros
 
 ## Comandos
 
@@ -45,6 +47,30 @@ Configurar enlaces reales:
 - Facebook
 - Mercado Pago / Stripe / transferencia
 - Webhook de leads
+
+## Código postal con D1
+
+El Worker ya incluye `GET /api/postal-code?cp=00000` para consultar colonias por código postal cuando exista el binding `POSTAL_CODES_DB`.
+
+Pasos pendientes en Cloudflare:
+
+```bash
+wrangler d1 create landing-guiasuniversitariasdb
+wrangler d1 migrations apply landing-guiasuniversitariasdb --remote
+```
+
+Después de crear la base, agregar el binding real a `wrangler.toml` con el `database_id` que entregue Wrangler:
+
+```toml
+[[d1_databases]]
+binding = "POSTAL_CODES_DB"
+database_name = "landing-guiasuniversitariasdb"
+database_id = "bbbb2d62-3654-4e17-9187-41fab693aa0c"
+```
+
+Las migraciones viven en `migrations/`. El catálogo SEPOMEX/Correos de México fue cargado en D1 con 158,416 registros y 31,874 códigos postales distintos.
+
+El catálogo oficial indica que se proporciona gratuitamente para uso particular y que no está permitida su comercialización ni distribución a terceros.
 
 ## Webhook de leads
 

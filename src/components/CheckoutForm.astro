@@ -1,0 +1,238 @@
+---
+import { product } from '../content/product';
+import { site, whatsappHref } from '../content/site';
+---
+<section class="section checkout-section">
+  <div class="container checkout-layout">
+    <div class="section-header checkout-intro">
+      <div class="kicker">Compra</div>
+      <h1 class="checkout-heading">Empecemos con tu código postal.</h1>
+      <p class="lead">Confirma entrega, elige tu guía y deja los datos necesarios para preparar el pedido en {site.domain}.</p>
+    </div>
+
+    <form class="card form checkout-form" id="checkout-form">
+      <div class="checkout-step">
+        <span>1</span>
+        <div>
+          <h2>Entrega</h2>
+          <p>El código postal llena estado, municipio y colonias cuando el catálogo D1 esté cargado.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="postalCode">Código postal</label>
+          <input id="postalCode" name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" placeholder="Ej. 94290" required />
+        </div>
+        <div class="field">
+          <label for="settlement">Colonia o fraccionamiento</label>
+          <select id="settlement" name="settlement" required disabled>
+            <option value="">Primero escribe tu CP</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="state">Estado</label>
+          <input id="state" name="state" autocomplete="address-level1" readonly required />
+        </div>
+        <div class="field">
+          <label for="municipality">Municipio o alcaldía</label>
+          <input id="municipality" name="municipality" autocomplete="address-level2" readonly required />
+        </div>
+        <div class="field">
+          <label for="street">Calle</label>
+          <input id="street" name="street" autocomplete="street-address" required />
+        </div>
+        <div class="field">
+          <label for="externalNumber">Número exterior</label>
+          <input id="externalNumber" name="externalNumber" autocomplete="address-line2" required />
+        </div>
+        <div class="field">
+          <label for="internalNumber">Número interior</label>
+          <input id="internalNumber" name="internalNumber" autocomplete="address-line3" />
+        </div>
+        <div class="field">
+          <label for="delivery">Entrega</label>
+          <select id="delivery" name="delivery" required>
+            <option value="envio-nacional">Envío nacional gratis</option>
+            <option value="entrega-personal">Entrega personal</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="references">Referencias</label>
+          <textarea id="references" name="references" placeholder="Entre calles, color de fachada o detalle útil para la entrega"></textarea>
+        </div>
+      </div>
+
+      <div class="checkout-step">
+        <span>2</span>
+        <div>
+          <h2>Guía y datos</h2>
+          <p>Con estos datos se prepara la orden y se envía seguimiento por WhatsApp.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="version">Versión</label>
+          <select id="version" name="version" required>
+            {product.versions.map((version) => <option value={version.id} data-price={version.price}>{version.name} - {version.price}</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <label for="name">Nombre completo</label>
+          <input id="name" name="name" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="whatsapp">WhatsApp</label>
+          <input id="whatsapp" name="whatsapp" inputmode="tel" autocomplete="tel" required />
+        </div>
+        <div class="field">
+          <label for="email">Correo para recibo</label>
+          <input id="email" name="email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field full checkbox-field">
+          <label>
+            <input id="terms" name="terms" type="checkbox" required />
+            <span>Acepto los <a class="inline-link" href="/terminos">términos</a> y el <a class="inline-link" href="/privacidad">aviso de privacidad</a>.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="checkout-summary" aria-live="polite">
+        <span id="selected-version-label">Guía Clásica</span>
+        <strong id="selected-version-price">$419 MXN</strong>
+      </div>
+
+      <button class="btn btn-primary" type="submit">Preparar pago</button>
+      <a class="btn btn-secondary btn-whatsapp" href={whatsappHref('Hola, quiero ayuda para comprar mi guía.')} onclick="trackLandingEvent('click_whatsapp', {location: 'checkout_form'})">Ayuda por WhatsApp</a>
+      <p class="form-status" id="checkout-status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<script>
+  type PostalLookupResponse =
+    | {
+        ok: true;
+        cp: string;
+        state: string;
+        municipality: string;
+        settlements: Array<{ name: string; type?: string | null }>;
+      }
+    | {
+        ok: false;
+        error: string;
+      };
+
+  const form = document.querySelector('#checkout-form') as HTMLFormElement | null;
+  const postalCodeInput = document.querySelector('#postalCode') as HTMLInputElement | null;
+  const settlementSelect = document.querySelector('#settlement') as HTMLSelectElement | null;
+  const stateInput = document.querySelector('#state') as HTMLInputElement | null;
+  const municipalityInput = document.querySelector('#municipality') as HTMLInputElement | null;
+  const versionSelect = document.querySelector('#version') as HTMLSelectElement | null;
+  const status = document.querySelector('#checkout-status') as HTMLParagraphElement | null;
+  const selectedVersionLabel = document.querySelector('#selected-version-label') as HTMLSpanElement | null;
+  const selectedVersionPrice = document.querySelector('#selected-version-price') as HTMLElement | null;
+
+  let lookupAbortController: AbortController | null = null;
+
+  function setStatus(message: string) {
+    if (status) status.textContent = message;
+  }
+
+  function setSettlementOptions(options: Array<{ name: string; type?: string | null }>, placeholder = 'Selecciona colonia') {
+    if (!settlementSelect) return;
+
+    settlementSelect.innerHTML = '';
+    const firstOption = document.createElement('option');
+    firstOption.value = '';
+    firstOption.textContent = placeholder;
+    settlementSelect.appendChild(firstOption);
+
+    options.forEach((option) => {
+      const item = document.createElement('option');
+      item.value = option.name;
+      item.textContent = option.type ? `${option.name} (${option.type})` : option.name;
+      settlementSelect.appendChild(item);
+    });
+
+    settlementSelect.disabled = options.length === 0;
+  }
+
+  function resetPostalFields() {
+    if (stateInput) stateInput.value = '';
+    if (municipalityInput) municipalityInput.value = '';
+    setSettlementOptions([], 'Primero escribe tu CP');
+  }
+
+  async function lookupPostalCode(cp: string) {
+    if (!postalCodeInput || !stateInput || !municipalityInput || !settlementSelect) return;
+
+    if (!/^\d{5}$/.test(cp)) {
+      resetPostalFields();
+      setStatus('');
+      return;
+    }
+
+    lookupAbortController?.abort();
+    lookupAbortController = new AbortController();
+    setStatus('Buscando colonias...');
+
+    try {
+      const response = await fetch(`/api/postal-code?cp=${encodeURIComponent(cp)}`, {
+        signal: lookupAbortController.signal
+      });
+      const result = (await response.json()) as PostalLookupResponse;
+
+      if (!response.ok || !result.ok) {
+        resetPostalFields();
+        setStatus('Todavía no encontramos ese código postal. Cuando carguemos el catálogo nacional aparecerá aquí.');
+        return;
+      }
+
+      stateInput.value = result.state;
+      municipalityInput.value = result.municipality;
+      setSettlementOptions(result.settlements);
+      setStatus(`${result.settlements.length} colonia(s) encontradas.`);
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') return;
+      resetPostalFields();
+      setStatus('No se pudo consultar el código postal en este momento.');
+    }
+  }
+
+  function updateSelectedVersion() {
+    if (!versionSelect || !selectedVersionLabel || !selectedVersionPrice) return;
+    const option = versionSelect.selectedOptions[0];
+    selectedVersionLabel.textContent = option?.textContent?.replace(/\s-\s.*/, '') || 'Guía Clásica';
+    selectedVersionPrice.textContent = option?.dataset.price || '$419 MXN';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const initialVersion = params.get('version');
+  if (versionSelect && initialVersion) {
+    const matchingOption = Array.from(versionSelect.options).find((option) => option.value === initialVersion);
+    if (matchingOption) versionSelect.value = matchingOption.value;
+  }
+  updateSelectedVersion();
+
+  postalCodeInput?.addEventListener('input', () => {
+    postalCodeInput.value = postalCodeInput.value.replace(/\D/g, '').slice(0, 5);
+    window.setTimeout(() => lookupPostalCode(postalCodeInput.value), 160);
+  });
+
+  versionSelect?.addEventListener('change', updateSelectedVersion);
+
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+
+    (window as Window & { trackLandingEvent?: (name: string, payload?: Record<string, unknown>) => void })
+      .trackLandingEvent?.('prepare_checkout_form', payload);
+
+    setStatus('Formulario listo. El siguiente paso será crear el pago embebido con Stripe.');
+  });
+</script>

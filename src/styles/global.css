@@ -452,6 +452,81 @@ input, select, textarea {
 }
 textarea { min-height: 116px; resize: vertical; }
 .form-status { color: var(--muted); min-height: 22px; font-size: 0.92rem; }
+.checkout-section { padding-top: 36px; }
+.checkout-layout {
+  display: grid;
+  gap: 22px;
+}
+.checkout-intro {
+  align-self: start;
+}
+.checkout-heading {
+  margin-top: 10px;
+  font-size: clamp(2.2rem, 9vw, 4.6rem);
+  line-height: 0.96;
+  letter-spacing: -0.065em;
+}
+.checkout-form {
+  gap: 18px;
+}
+.checkout-step {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.checkout-step span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-weight: 900;
+}
+.checkout-step h2 {
+  margin: 0 0 4px;
+  font-size: 1.35rem;
+  letter-spacing: -0.035em;
+}
+.checkout-step p {
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.45;
+}
+.checkbox-field label {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 10px;
+  align-items: start;
+  color: var(--muted);
+  font-weight: 650;
+  line-height: 1.45;
+}
+.checkbox-field input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  padding: 0;
+}
+.checkout-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--story-bg);
+}
+.checkout-summary span {
+  color: var(--muted);
+  font-weight: 800;
+}
+.checkout-summary strong {
+  font-size: 1.3rem;
+}
 
 .footer { padding: 34px 0 112px; color: var(--muted); border-top: 1px solid var(--line); }
 .footer-grid { display: grid; gap: 16px; }
@@ -483,6 +558,7 @@ textarea { min-height: 116px; resize: vertical; }
   .delivery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .field.full { grid-column: 1 / -1; }
+  .checkout-layout { grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr); align-items: start; }
   .footer-grid { grid-template-columns: 1fr auto; align-items: start; }
   .footer { padding-bottom: 42px; }
   .footer-signature { margin-top: 46px; }

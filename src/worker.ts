@@ -1,6 +1,7 @@
 export interface Env {
   ASSETS: Fetcher;
   LEADS_WEBHOOK_URL?: string;
+  POSTAL_CODES_DB?: D1Database;
 }
 
 type LeadPayload = {
@@ -12,6 +13,14 @@ type LeadPayload = {
   version?: string;
   delivery?: string;
   message?: string;
+};
+
+type PostalCodeRow = {
+  cp: string;
+  state: string;
+  municipality: string;
+  settlement: string;
+  settlement_type: string | null;
 };
 
 function json(data: unknown, init: ResponseInit = {}) {
@@ -31,9 +40,56 @@ function validateLead(payload: LeadPayload) {
   return errors;
 }
 
+function normalizePostalCode(value: string | null) {
+  return (value || '').replace(/\D/g, '').slice(0, 5);
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    if (request.method === 'GET' && url.pathname === '/api/postal-code') {
+      const cp = normalizePostalCode(url.searchParams.get('cp'));
+
+      if (!/^\d{5}$/.test(cp)) {
+        return json({ ok: false, error: 'invalid_postal_code' }, { status: 400 });
+      }
+
+      if (!env.POSTAL_CODES_DB) {
+        return json({ ok: false, error: 'postal_database_not_configured' }, { status: 503 });
+      }
+
+      try {
+        const result = await env.POSTAL_CODES_DB
+          .prepare(
+            `select cp, state, municipality, settlement, settlement_type
+             from postal_codes
+             where cp = ?
+             order by settlement asc`
+          )
+          .bind(cp)
+          .all<PostalCodeRow>();
+
+        if (!result.results.length) {
+          return json({ ok: false, error: 'postal_code_not_found' }, { status: 404 });
+        }
+
+        const first = result.results[0];
+
+        return json({
+          ok: true,
+          cp,
+          state: first.state,
+          municipality: first.municipality,
+          settlements: result.results.map((row) => ({
+            name: row.settlement,
+            type: row.settlement_type
+          }))
+        });
+      } catch {
+        return json({ ok: false, error: 'postal_lookup_failed' }, { status: 500 });
+      }
+    }
 
     if (request.method === 'POST' && url.pathname === '/api/leads') {
       let payload: LeadPayload;

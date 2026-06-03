@@ -3,6 +3,8 @@ export type GuideVersion = {
   name: string;
   label?: string;
   price: string;
+  amount: number;
+  currency: 'mxn';
   paymentUrl: string;
   coverImage: string;
   coverAlt: string;
@@ -31,7 +33,9 @@ export const product = {
       name: 'Guía Clásica',
       label: 'Envío gratis a todo México',
       price: '$419 MXN',
-      paymentUrl: '#pendiente-link-pago-clasica',
+      amount: 41900,
+      currency: 'mxn',
+      paymentUrl: '/comprar?version=clasica',
       coverImage: '/images/guia-clasica.webp',
       coverAlt: 'Portada de la Guía Clásica para examen de ingreso a educación superior',
       sampleImage: '/images/muestra-guia-clasica.svg',
@@ -53,7 +57,9 @@ export const product = {
       name: 'Guía Plus',
       label: 'Envío gratis a todo México',
       price: '$519 MXN',
-      paymentUrl: '#pendiente-link-pago-plus',
+      amount: 51900,
+      currency: 'mxn',
+      paymentUrl: '/comprar?version=plus',
       coverImage: '/images/guia-plus.webp',
       coverAlt: 'Portada blanca de la Guía Plus para examen de ingreso a educación superior',
       shortDescription:
