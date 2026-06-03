@@ -189,13 +189,13 @@ button, input, select, textarea { font: inherit; }
 @media (max-width: 520px) {
   .header-inner { gap: 8px; }
   .logo img {
-    width: min(132px, 34vw);
+    width: min(150px, 38vw);
     max-height: 38px;
   }
   .header-actions { gap: 6px; }
   .header-actions .btn {
-    padding: 8px 8px;
-    font-size: 0.8rem;
+    padding: 8px 9px;
+    font-size: 0.86rem;
   }
   .theme-toggle {
     width: 34px;
@@ -210,7 +210,7 @@ button, input, select, textarea { font: inherit; }
   display: inline-flex;
   width: fit-content;
   max-width: min(100%, 48rem);
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   padding: 7px 12px;
   border: 1px solid var(--line);
@@ -221,14 +221,25 @@ button, input, select, textarea { font: inherit; }
   font-weight: 750;
   line-height: 1.35;
 }
+.eyebrow-text {
+  min-width: 0;
+}
 .eyebrow::before {
   content: '';
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
-  margin-top: 0.42em;
   background: var(--ok);
   border-radius: 50%;
+}
+.theme-toggle-inline {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+}
+.theme-toggle-inline .theme-toggle-icon {
+  font-size: 0.92rem;
 }
 h1 {
   margin: 16px 0 14px;
