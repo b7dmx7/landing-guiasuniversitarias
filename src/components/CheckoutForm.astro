@@ -25,18 +25,18 @@ import { whatsappHref } from '../content/site';
           <input id="postalCode" name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" placeholder="Ej. 94290" required />
         </div>
         <div class="field">
-          <label for="settlement">Colonia o fraccionamiento</label>
-          <select id="settlement" name="settlement" required disabled>
-            <option value="">Primero escribe tu CP</option>
-          </select>
-        </div>
-        <div class="field">
           <label for="state">Estado</label>
           <input id="state" name="state" autocomplete="address-level1" readonly required />
         </div>
         <div class="field">
           <label for="municipality">Municipio o alcaldía</label>
           <input id="municipality" name="municipality" autocomplete="address-level2" readonly required />
+        </div>
+        <div class="field">
+          <label for="settlement">Colonia o fraccionamiento</label>
+          <select id="settlement" name="settlement" required disabled>
+            <option value="">Primero escribe tu CP</option>
+          </select>
         </div>
         <div class="field">
           <label for="street">Calle</label>
