@@ -4,7 +4,7 @@ export const site = {
   tagline: 'Material físico para preparar tu examen de admisión',
   whatsappNumber: '528141890555',
   whatsappText: 'Hola, quiero información sobre la guía EXANI-II.',
-  facebookUrl: 'https://www.facebook.com/GUIASUNIVERSITARIAS',
+  facebookUrl: 'https://www.facebook.com/guiasunimexico',
   email: 'contacto@guiasuniversitarias.com',
   cities: ['Monterrey', 'Guadalajara', 'Veracruz'],
   shipping: 'Envío sin costo a todo México',

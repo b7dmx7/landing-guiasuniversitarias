@@ -13,6 +13,10 @@ import { site, whatsappHref } from '../content/site';
       <a href="/articulos">Artículos</a>
     </nav>
     <div class="header-actions">
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Cambiar tema">
+        <span class="theme-toggle-icon" data-icon="moon" aria-hidden="true">☾</span>
+        <span class="theme-toggle-icon" data-icon="sun" aria-hidden="true">☀</span>
+      </button>
       <a class="btn btn-primary" href="/guias/exani-ii#versiones" onclick="trackLandingEvent('click_view_pricing', {location: 'header'})">Comprar</a>
       <a class="btn btn-secondary btn-whatsapp" href={whatsappHref()} onclick="trackLandingEvent('click_whatsapp', {location: 'header'})">WhatsApp</a>
     </div>

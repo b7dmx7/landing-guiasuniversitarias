@@ -17,7 +17,27 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#f7f1e8" />
+    <script is:inline>
+      (function() {
+        var storedTheme = null;
+        try {
+          storedTheme = localStorage.getItem('theme');
+        } catch (error) {}
+
+        var systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var activeTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : systemDark ? 'dark' : 'light';
+
+        if (storedTheme === 'light' || storedTheme === 'dark') {
+          document.documentElement.dataset.theme = storedTheme;
+        }
+
+        var themeMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeMeta) {
+          themeMeta.setAttribute('content', activeTheme === 'dark' ? '#000000' : '#f7f1e8');
+        }
+      })();
+    </script>
     <title>{title}</title>
   </head>
   <body>
@@ -27,6 +47,65 @@ const {
         window.dispatchEvent(new CustomEvent('landing:event', { detail: { name, payload: payload || {} } }));
         console.log('[landing:event]', name, payload || {});
       };
+
+      (function() {
+        var root = document.documentElement;
+        var button = document.querySelector('[data-theme-toggle]');
+        var themeMeta = document.querySelector('meta[name="theme-color"]');
+        var media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+        function getStoredTheme() {
+          try {
+            return localStorage.getItem('theme');
+          } catch (error) {
+            return null;
+          }
+        }
+
+        function getSystemTheme() {
+          return media && media.matches ? 'dark' : 'light';
+        }
+
+        function getActiveTheme() {
+          var storedTheme = getStoredTheme();
+          return storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : getSystemTheme();
+        }
+
+        function updateThemeChrome(theme) {
+          if (button) {
+            button.dataset.currentTheme = theme;
+            button.setAttribute('aria-label', theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro');
+          }
+          if (themeMeta) {
+            themeMeta.setAttribute('content', theme === 'dark' ? '#000000' : '#f7f1e8');
+          }
+        }
+
+        updateThemeChrome(getActiveTheme());
+
+        if (button) {
+          button.addEventListener('click', function() {
+            var nextTheme = getActiveTheme() === 'dark' ? 'light' : 'dark';
+            root.dataset.theme = nextTheme;
+            try {
+              localStorage.setItem('theme', nextTheme);
+            } catch (error) {}
+            updateThemeChrome(nextTheme);
+            window.trackLandingEvent('toggle_theme', {theme: nextTheme});
+          });
+        }
+
+        if (media) {
+          var handleSystemThemeChange = function() {
+            var storedTheme = getStoredTheme();
+            if (storedTheme !== 'light' && storedTheme !== 'dark') {
+              updateThemeChrome(getSystemTheme());
+            }
+          };
+
+          media.addEventListener('change', handleSystemThemeChange);
+        }
+      })();
     </script>
   </body>
 </html>
