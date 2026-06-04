@@ -1,4 +1,4 @@
-name = "landing-guiasuniversitarias"
+name = "landing-guiasuniversitarias2"
 main = "src/worker.ts"
 compatibility_date = "2026-05-30"
 routes = [
