@@ -21,6 +21,7 @@ Publicar una landing funcional en horas, no días:
 - CSS mobile-first propio
 - Cloudflare Workers + Static Assets
 - Cloudflare D1 para catálogo de códigos postales y pedidos futuros
+- Stripe Payment Element para pago embebido en el dominio
 
 ## Comandos
 
@@ -50,12 +51,46 @@ Editar:
 - `src/content/faq.ts`
 - `public/images/cover-placeholder.svg`
 
-Configurar enlaces reales:
+Configurar enlaces reales y servicios:
 
 - WhatsApp
 - Facebook
-- Mercado Pago / Stripe / transferencia
+- Stripe
 - Webhook de leads
+
+## Stripe embebido
+
+El formulario de compra usa Stripe Payment Element para preparar y confirmar el pago sin sacar al usuario del dominio. El Worker crea el PaymentIntent en `POST /api/stripe/payment-intent` y fuerza métodos sin redirección con `automatic_payment_methods[allow_redirects]=never`.
+
+Configurar las llaves en Cloudflare antes de cobrar:
+
+```bash
+wrangler secret put STRIPE_SECRET_KEY
+wrangler secret put STRIPE_PUBLISHABLE_KEY
+```
+
+Usar llaves de prueba (`sk_test_...` y `pk_test_...`) mientras se valida el flujo. Cambiar a llaves live (`sk_live_...` y `pk_live_...`) solo cuando el formulario, confirmación de pago, recibos y operación de entrega estén listos.
+
+En local, crear un archivo `.dev.vars` sin subirlo a Git:
+
+```bash
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+Para probar el flujo completo con Worker:
+
+```bash
+npm run worker:dev -- --port 8788
+```
+
+Para probar junto con la D1 remota:
+
+```bash
+npm run worker:dev:remote -- --port 8788
+```
+
+Falta agregar webhook de Stripe para confirmar pagos del lado servidor y preparar fulfillment automático. Mientras tanto, Stripe conservará monto, versión, datos de envío y metadata dentro del PaymentIntent.
 
 ## Código postal con D1
 

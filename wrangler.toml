@@ -19,3 +19,7 @@ database_id = "bbbb2d62-3654-4e17-9187-41fab693aa0c"
 # Para activar captura de leads:
 # wrangler secret put LEADS_WEBHOOK_URL
 # El webhook puede ser Make, Zapier, Google Apps Script, Zoho Flow, etc.
+
+# Para activar pagos embebidos con Stripe:
+# wrangler secret put STRIPE_SECRET_KEY
+# wrangler secret put STRIPE_PUBLISHABLE_KEY

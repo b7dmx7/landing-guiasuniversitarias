@@ -103,13 +103,22 @@ import { whatsappHref } from '../content/site';
         <strong id="selected-version-price">$419 MXN</strong>
       </div>
 
-      <button class="btn btn-primary" type="submit">Preparar pago</button>
+      <div class="stripe-payment-panel" id="stripe-payment-panel" hidden>
+        <div>
+          <h3>Pago seguro</h3>
+          <p>Completa el pago aquí mismo. Stripe procesa los datos de tarjeta de forma segura.</p>
+        </div>
+        <div id="payment-element"></div>
+      </div>
+
+      <button class="btn btn-primary" id="checkout-submit" type="submit">Preparar pago</button>
       <a class="btn btn-secondary btn-whatsapp" href={whatsappHref('Hola, quiero ayuda para comprar mi guía.')} onclick="trackLandingEvent('click_whatsapp', {location: 'checkout_form'})">Ayuda por WhatsApp</a>
       <p class="form-status" id="checkout-status" aria-live="polite"></p>
     </form>
   </div>
 </section>
 
+<script is:inline src="https://js.stripe.com/v3/"></script>
 <script>
   type PostalLookupResponse =
     | {
@@ -124,6 +133,42 @@ import { whatsappHref } from '../content/site';
         error: string;
       };
 
+  type CheckoutPayload = Record<string, string>;
+  type StripePaymentIntentResponse =
+    | {
+        ok: true;
+        publishableKey: string;
+        clientSecret: string;
+        paymentIntentId: string;
+        amount: number;
+        currency: string;
+        version: { id: string; name: string; price: string };
+        returnUrl: string;
+      }
+    | {
+        ok: false;
+        error?: string;
+        message?: string;
+        errors?: string[];
+      };
+  type StripePaymentIntent = { id: string; status: string };
+  type StripeConfirmPaymentResult = {
+    error?: { message?: string };
+    paymentIntent?: StripePaymentIntent;
+  };
+  type StripePaymentElement = {
+    mount: (selector: string) => void;
+    unmount: () => void;
+  };
+  type StripeElements = {
+    create: (type: 'payment', options?: Record<string, unknown>) => StripePaymentElement;
+  };
+  type StripeInstance = {
+    elements: (options: { clientSecret: string; appearance?: Record<string, unknown> }) => StripeElements;
+    confirmPayment: (options: Record<string, unknown>) => Promise<StripeConfirmPaymentResult>;
+  };
+  type StripeConstructor = (publishableKey: string) => StripeInstance | null;
+
   const form = document.querySelector('#checkout-form') as HTMLFormElement | null;
   const postalCodeInput = document.querySelector('#postalCode') as HTMLInputElement | null;
   const settlementSelect = document.querySelector('#settlement') as HTMLSelectElement | null;
@@ -131,13 +176,216 @@ import { whatsappHref } from '../content/site';
   const municipalityInput = document.querySelector('#municipality') as HTMLInputElement | null;
   const versionSelect = document.querySelector('#version') as HTMLSelectElement | null;
   const status = document.querySelector('#checkout-status') as HTMLParagraphElement | null;
+  const submitButton = document.querySelector('#checkout-submit') as HTMLButtonElement | null;
+  const paymentPanel = document.querySelector('#stripe-payment-panel') as HTMLDivElement | null;
   const selectedVersionLabel = document.querySelector('#selected-version-label') as HTMLSpanElement | null;
   const selectedVersionPrice = document.querySelector('#selected-version-price') as HTMLElement | null;
 
   let lookupAbortController: AbortController | null = null;
+  let stripe: StripeInstance | null = null;
+  let elements: StripeElements | null = null;
+  let paymentElement: StripePaymentElement | null = null;
+  let paymentReady = false;
+  let isSubmittingPayment = false;
 
   function setStatus(message: string) {
     if (status) status.textContent = message;
+  }
+
+  function getWindowHelpers() {
+    return window as Window & {
+      Stripe?: StripeConstructor;
+      trackLandingEvent?: (name: string, payload?: Record<string, unknown>) => void;
+    };
+  }
+
+  function serializeForm() {
+    const payload: CheckoutPayload = {};
+    if (!form) return payload;
+
+    for (const [key, value] of new FormData(form).entries()) {
+      if (typeof value === 'string') payload[key] = value;
+    }
+
+    return payload;
+  }
+
+  function setSubmitState(isLoading: boolean, label?: string) {
+    if (!submitButton) return;
+    submitButton.disabled = isLoading;
+    submitButton.textContent = label || (paymentReady ? 'Pagar ahora' : 'Preparar pago');
+  }
+
+  function clearPreparedPayment(message?: string) {
+    if (!paymentReady && !paymentElement) return;
+
+    paymentElement?.unmount();
+    paymentElement = null;
+    elements = null;
+    stripe = null;
+    paymentReady = false;
+    if (paymentPanel) paymentPanel.hidden = true;
+    setSubmitState(false);
+    if (message) setStatus(message);
+  }
+
+  function getAppearance() {
+    const root = document.documentElement;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = root.dataset.theme === 'dark' || (!root.dataset.theme && prefersDark);
+
+    return {
+      theme: isDark ? 'night' : 'stripe',
+      variables: {
+        colorPrimary: '#0057ff',
+        borderRadius: '14px',
+        fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+      }
+    };
+  }
+
+  function buildBillingDetails(payload: CheckoutPayload) {
+    return {
+      name: payload.name,
+      email: payload.email,
+      phone: payload.whatsapp,
+      address: {
+        line1: `${payload.street || ''} ${payload.externalNumber || ''}`.trim(),
+        line2: [payload.internalNumber ? `Int. ${payload.internalNumber}` : '', payload.settlement || ''].filter(Boolean).join(', '),
+        postal_code: payload.postalCode,
+        city: payload.municipality,
+        state: payload.state,
+        country: 'MX'
+      }
+    };
+  }
+
+  async function prepareStripePayment(payload: CheckoutPayload) {
+    const StripeConstructor = getWindowHelpers().Stripe;
+
+    if (!StripeConstructor) {
+      setStatus('Stripe.js no terminó de cargar. Revisa tu conexión e intenta de nuevo.');
+      return;
+    }
+
+    setSubmitState(true, 'Preparando pago...');
+
+    try {
+      const response = await fetch('/api/stripe/payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const result = (await response.json()) as StripePaymentIntentResponse;
+
+      if (!result.ok) {
+        if (result.error === 'stripe_not_configured') {
+          setStatus('Stripe todavía no está configurado. Falta agregar las llaves en Cloudflare.');
+        } else {
+          setStatus(result.message || 'No se pudo preparar el pago. Revisa los datos e intenta de nuevo.');
+        }
+        setSubmitState(false, 'Preparar pago');
+        return;
+      }
+
+      if (!response.ok) {
+        setStatus('No se pudo preparar el pago. Intenta de nuevo.');
+        setSubmitState(false, 'Preparar pago');
+        return;
+      }
+
+      clearPreparedPayment();
+      stripe = StripeConstructor(result.publishableKey);
+      if (!stripe) {
+        setStatus('No se pudo inicializar Stripe. Intenta de nuevo.');
+        setSubmitState(false, 'Preparar pago');
+        return;
+      }
+
+      elements = stripe.elements({
+        clientSecret: result.clientSecret,
+        appearance: getAppearance()
+      });
+      paymentElement = elements.create('payment', {
+        layout: 'tabs',
+        defaultValues: {
+          billingDetails: buildBillingDetails(payload)
+        }
+      });
+      paymentElement.mount('#payment-element');
+      paymentReady = true;
+      if (paymentPanel) paymentPanel.hidden = false;
+      setStatus(`Pago listo para ${result.version.name}. Completa los datos de pago y confirma.`);
+      setSubmitState(false, `Pagar ${result.version.price}`);
+      getWindowHelpers().trackLandingEvent?.('stripe_payment_intent_ready', {
+        version: result.version.id,
+        amount: result.amount,
+        currency: result.currency
+      });
+    } catch {
+      setStatus('No se pudo conectar con Stripe en este momento.');
+      setSubmitState(false, 'Preparar pago');
+    }
+  }
+
+  async function confirmStripePayment(payload: CheckoutPayload) {
+    if (!stripe || !elements) {
+      clearPreparedPayment('Prepara el pago nuevamente.');
+      return;
+    }
+
+    isSubmittingPayment = true;
+    setSubmitState(true, 'Procesando pago...');
+
+    const billingDetails = buildBillingDetails(payload);
+
+    try {
+      const result = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/checkout/success`,
+          payment_method_data: {
+            billing_details: billingDetails
+          },
+          shipping: {
+            name: payload.name,
+            phone: payload.whatsapp,
+            address: billingDetails.address
+          }
+        },
+        redirect: 'if_required'
+      });
+
+      if (result.error) {
+        setStatus(result.error.message || 'No se pudo confirmar el pago.');
+        setSubmitState(false);
+        isSubmittingPayment = false;
+        return;
+      }
+
+      getWindowHelpers().trackLandingEvent?.('stripe_payment_confirmed', {
+        paymentIntentId: result.paymentIntent?.id,
+        status: result.paymentIntent?.status
+      });
+
+      if (result.paymentIntent?.status === 'succeeded') {
+        window.location.href = `/checkout/success?payment_intent=${encodeURIComponent(result.paymentIntent.id)}`;
+        return;
+      }
+
+      if (['processing', 'requires_capture'].includes(result.paymentIntent?.status || '')) {
+        window.location.href = `/checkout/pending?payment_intent=${encodeURIComponent(result.paymentIntent?.id || '')}`;
+        return;
+      }
+
+      setStatus('El pago requiere una acción adicional. Revisa el método de pago o intenta con otra tarjeta.');
+      setSubmitState(false);
+      isSubmittingPayment = false;
+    } catch {
+      setStatus('No se pudo confirmar el pago en este momento.');
+      setSubmitState(false);
+      isSubmittingPayment = false;
+    }
   }
 
   function setSettlementOptions(options: Array<{ name: string; type?: string | null }>, placeholder = 'Selecciona colonia') {
@@ -206,6 +454,7 @@ import { whatsappHref } from '../content/site';
     const option = versionSelect.selectedOptions[0];
     selectedVersionLabel.textContent = option?.textContent?.replace(/\s-\s.*/, '') || 'Guía Clásica';
     selectedVersionPrice.textContent = option?.dataset.price || '$419 MXN';
+    if (!paymentReady) setSubmitState(false, 'Preparar pago');
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -223,16 +472,26 @@ import { whatsappHref } from '../content/site';
 
   versionSelect?.addEventListener('change', updateSelectedVersion);
 
-  form?.addEventListener('submit', (event) => {
+  form?.addEventListener('input', () => {
+    if (!isSubmittingPayment) clearPreparedPayment('Actualizaste datos. Prepara el pago nuevamente.');
+  });
+
+  form?.addEventListener('change', () => {
+    if (!isSubmittingPayment) clearPreparedPayment('Actualizaste datos. Prepara el pago nuevamente.');
+  });
+
+  form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!form.reportValidity()) return;
 
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData.entries());
+    const payload = serializeForm();
+    getWindowHelpers().trackLandingEvent?.('prepare_checkout_form', payload);
 
-    (window as Window & { trackLandingEvent?: (name: string, payload?: Record<string, unknown>) => void })
-      .trackLandingEvent?.('prepare_checkout_form', payload);
+    if (paymentReady) {
+      await confirmStripePayment(payload);
+      return;
+    }
 
-    setStatus('Formulario listo. El siguiente paso será crear el pago embebido con Stripe.');
+    await prepareStripePayment(payload);
   });
 </script>
