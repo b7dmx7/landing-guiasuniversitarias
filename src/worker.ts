@@ -30,6 +30,7 @@ type CheckoutPayload = {
   delivery?: string;
   references?: string;
   version?: string;
+  paymentMethod?: string;
   name?: string;
   whatsapp?: string;
   email?: string;
@@ -72,6 +73,7 @@ function cleanString(value: unknown, maxLength = 160) {
 function validateCheckout(payload: CheckoutPayload) {
   const errors: string[] = [];
   const version = product.versions.find((item) => item.id === payload.version);
+  const paymentMethod = payload.paymentMethod === 'oxxo' ? 'oxxo' : 'card';
 
   if (!version) errors.push('version_required');
   if (!/^\d{5}$/.test(normalizePostalCode(payload.postalCode || null))) errors.push('postal_code_required');
@@ -85,7 +87,7 @@ function validateCheckout(payload: CheckoutPayload) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanString(payload.email, 180))) errors.push('email_required');
   if (!payload.terms) errors.push('terms_required');
 
-  return { errors, version };
+  return { errors, version, paymentMethod };
 }
 
 function appendStripeParam(params: URLSearchParams, key: string, value: unknown) {
@@ -98,7 +100,7 @@ async function createStripePaymentIntent(payload: CheckoutPayload, env: Env, req
     return json({ ok: false, error: 'stripe_not_configured' }, { status: 503 });
   }
 
-  const { errors, version } = validateCheckout(payload);
+  const { errors, version, paymentMethod } = validateCheckout(payload);
   if (errors.length > 0 || !version) return json({ ok: false, errors }, { status: 422 });
 
   const postalCode = normalizePostalCode(payload.postalCode || null);
@@ -120,10 +122,13 @@ async function createStripePaymentIntent(payload: CheckoutPayload, env: Env, req
   params.append('currency', version.currency);
   params.append('description', `${version.name} - Guías Universitarias`);
   params.append('receipt_email', email);
-  params.append('automatic_payment_methods[enabled]', 'true');
-  params.append('automatic_payment_methods[allow_redirects]', 'never');
+  params.append('payment_method_types[]', paymentMethod);
+  if (paymentMethod === 'oxxo') {
+    params.append('payment_method_options[oxxo][expires_after_days]', '3');
+  }
   params.append('metadata[source]', 'landing_checkout');
   params.append('metadata[version]', version.id);
+  params.append('metadata[payment_method]', paymentMethod);
   params.append('metadata[delivery]', cleanString(payload.delivery, 80));
   params.append('metadata[postal_code]', postalCode);
   params.append('metadata[settlement]', settlement);
@@ -150,6 +155,7 @@ async function createStripePaymentIntent(payload: CheckoutPayload, env: Env, req
   const stripeResponse = (await response.json()) as {
     id?: string;
     client_secret?: string;
+    livemode?: boolean;
     error?: { message?: string; type?: string };
   };
 
@@ -171,6 +177,8 @@ async function createStripePaymentIntent(payload: CheckoutPayload, env: Env, req
     paymentIntentId: stripeResponse.id,
     amount: version.amount,
     currency: version.currency,
+    paymentMethod,
+    livemode: Boolean(stripeResponse.livemode),
     version: {
       id: version.id,
       name: version.name,

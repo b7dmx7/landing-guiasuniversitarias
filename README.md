@@ -60,7 +60,12 @@ Configurar enlaces reales y servicios:
 
 ## Stripe embebido
 
-El formulario de compra usa Stripe Payment Element para preparar y confirmar el pago sin sacar al usuario del dominio. El Worker crea el PaymentIntent en `POST /api/stripe/payment-intent` y fuerza métodos sin redirección con `automatic_payment_methods[allow_redirects]=never`.
+El formulario de compra usa Stripe para preparar y confirmar el pago sin sacar al usuario del dominio.
+
+- Tarjeta: usa Stripe Payment Element embebido.
+- OXXO Pay: genera la referencia OXXO desde Stripe y la muestra en la landing.
+
+El Worker crea el PaymentIntent en `POST /api/stripe/payment-intent` y fija el método de pago del lado servidor (`card` u `oxxo`) según lo seleccionado por el usuario.
 
 Configurar las llaves en Cloudflare antes de cobrar:
 
@@ -69,7 +74,7 @@ wrangler secret put STRIPE_SECRET_KEY
 wrangler secret put STRIPE_PUBLISHABLE_KEY
 ```
 
-Usar llaves de prueba (`sk_test_...` y `pk_test_...`) mientras se valida el flujo. Cambiar a llaves live (`sk_live_...` y `pk_live_...`) solo cuando el formulario, confirmación de pago, recibos y operación de entrega estén listos.
+Usar llaves de prueba (`sk_test_...` y `pk_test_...`) mientras se valida el flujo. Cambiar a llaves live (`sk_live_...` y `pk_live_...`) solo cuando el formulario, confirmación de pago, recibos y operación de entrega estén listos. Si no recuerdas qué llaves guardaste, revisa en Stripe Dashboard si los PaymentIntents aparecen con **Test mode** activado o reemplaza los secrets por llaves `test`.
 
 En local, crear un archivo `.dev.vars` sin subirlo a Git:
 
@@ -90,7 +95,7 @@ Para probar junto con la D1 remota:
 npm run worker:dev:remote -- --port 8788
 ```
 
-Falta agregar webhook de Stripe para confirmar pagos del lado servidor y preparar fulfillment automático. Mientras tanto, Stripe conservará monto, versión, datos de envío y metadata dentro del PaymentIntent.
+Falta agregar webhook de Stripe para confirmar pagos del lado servidor y preparar fulfillment automático. Esto es especialmente importante para OXXO porque el pedido queda pendiente hasta que el cliente paga la referencia y Stripe envía la confirmación.
 
 ## Código postal con D1
 

@@ -79,6 +79,13 @@ import { whatsappHref } from '../content/site';
           </select>
         </div>
         <div class="field">
+          <label for="paymentMethod">Método de pago</label>
+          <select id="paymentMethod" name="paymentMethod" required>
+            <option value="card">Tarjeta bancaria</option>
+            <option value="oxxo">OXXO Pay</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="name">Nombre completo</label>
           <input id="name" name="name" autocomplete="name" required />
         </div>
@@ -109,6 +116,24 @@ import { whatsappHref } from '../content/site';
           <p>Completa el pago aquí mismo. Stripe procesa los datos de tarjeta de forma segura.</p>
         </div>
         <div id="payment-element"></div>
+      </div>
+
+      <div class="oxxo-voucher-panel" id="oxxo-voucher-panel" hidden>
+        <div>
+          <h3>Referencia OXXO</h3>
+          <p>Lleva esta referencia a OXXO y paga antes de la fecha de vencimiento.</p>
+        </div>
+        <dl>
+          <div>
+            <dt>Referencia</dt>
+            <dd id="oxxo-reference">Pendiente</dd>
+          </div>
+          <div>
+            <dt>Vence</dt>
+            <dd id="oxxo-expires">Pendiente</dd>
+          </div>
+        </dl>
+        <a class="btn btn-secondary" id="oxxo-voucher-link" href="#" target="_blank" rel="noreferrer" hidden>Ver ficha de pago</a>
       </div>
 
       <button class="btn btn-primary" id="checkout-submit" type="submit">Preparar pago</button>
@@ -142,6 +167,8 @@ import { whatsappHref } from '../content/site';
         paymentIntentId: string;
         amount: number;
         currency: string;
+        paymentMethod: 'card' | 'oxxo';
+        livemode: boolean;
         version: { id: string; name: string; price: string };
         returnUrl: string;
       }
@@ -151,7 +178,17 @@ import { whatsappHref } from '../content/site';
         message?: string;
         errors?: string[];
       };
-  type StripePaymentIntent = { id: string; status: string };
+  type StripePaymentIntent = {
+    id: string;
+    status: string;
+    next_action?: {
+      oxxo_display_details?: {
+        number?: string;
+        expires_after?: number;
+        hosted_voucher_url?: string;
+      };
+    };
+  };
   type StripeConfirmPaymentResult = {
     error?: { message?: string };
     paymentIntent?: StripePaymentIntent;
@@ -166,6 +203,7 @@ import { whatsappHref } from '../content/site';
   type StripeInstance = {
     elements: (options: { clientSecret: string; appearance?: Record<string, unknown> }) => StripeElements;
     confirmPayment: (options: Record<string, unknown>) => Promise<StripeConfirmPaymentResult>;
+    confirmOxxoPayment: (clientSecret: string, options: Record<string, unknown>) => Promise<StripeConfirmPaymentResult>;
   };
   type StripeConstructor = (publishableKey: string) => StripeInstance | null;
 
@@ -175,9 +213,14 @@ import { whatsappHref } from '../content/site';
   const stateInput = document.querySelector('#state') as HTMLInputElement | null;
   const municipalityInput = document.querySelector('#municipality') as HTMLInputElement | null;
   const versionSelect = document.querySelector('#version') as HTMLSelectElement | null;
+  const paymentMethodSelect = document.querySelector('#paymentMethod') as HTMLSelectElement | null;
   const status = document.querySelector('#checkout-status') as HTMLParagraphElement | null;
   const submitButton = document.querySelector('#checkout-submit') as HTMLButtonElement | null;
   const paymentPanel = document.querySelector('#stripe-payment-panel') as HTMLDivElement | null;
+  const oxxoVoucherPanel = document.querySelector('#oxxo-voucher-panel') as HTMLDivElement | null;
+  const oxxoReference = document.querySelector('#oxxo-reference') as HTMLElement | null;
+  const oxxoExpires = document.querySelector('#oxxo-expires') as HTMLElement | null;
+  const oxxoVoucherLink = document.querySelector('#oxxo-voucher-link') as HTMLAnchorElement | null;
   const selectedVersionLabel = document.querySelector('#selected-version-label') as HTMLSpanElement | null;
   const selectedVersionPrice = document.querySelector('#selected-version-price') as HTMLElement | null;
 
@@ -186,6 +229,7 @@ import { whatsappHref } from '../content/site';
   let elements: StripeElements | null = null;
   let paymentElement: StripePaymentElement | null = null;
   let paymentReady = false;
+  let preparedClientSecret = '';
   let isSubmittingPayment = false;
 
   function setStatus(message: string) {
@@ -213,18 +257,35 @@ import { whatsappHref } from '../content/site';
   function setSubmitState(isLoading: boolean, label?: string) {
     if (!submitButton) return;
     submitButton.disabled = isLoading;
-    submitButton.textContent = label || (paymentReady ? 'Pagar ahora' : 'Preparar pago');
+    submitButton.textContent = label || getSubmitLabel();
+  }
+
+  function getSubmitLabel() {
+    if (paymentReady) return 'Pagar ahora';
+    return paymentMethodSelect?.value === 'oxxo' ? 'Generar referencia OXXO' : 'Preparar pago';
+  }
+
+  function clearOxxoVoucher() {
+    if (oxxoVoucherPanel) oxxoVoucherPanel.hidden = true;
+    if (oxxoReference) oxxoReference.textContent = 'Pendiente';
+    if (oxxoExpires) oxxoExpires.textContent = 'Pendiente';
+    if (oxxoVoucherLink) {
+      oxxoVoucherLink.hidden = true;
+      oxxoVoucherLink.href = '#';
+    }
   }
 
   function clearPreparedPayment(message?: string) {
-    if (!paymentReady && !paymentElement) return;
+    if (!paymentReady && !paymentElement && !preparedClientSecret && oxxoVoucherPanel?.hidden !== false) return;
 
     paymentElement?.unmount();
     paymentElement = null;
     elements = null;
     stripe = null;
     paymentReady = false;
+    preparedClientSecret = '';
     if (paymentPanel) paymentPanel.hidden = true;
+    clearOxxoVoucher();
     setSubmitState(false);
     if (message) setStatus(message);
   }
@@ -258,6 +319,33 @@ import { whatsappHref } from '../content/site';
         country: 'MX'
       }
     };
+  }
+
+  function formatOxxoExpiration(timestamp?: number) {
+    if (!timestamp) return 'Pendiente';
+
+    return new Intl.DateTimeFormat('es-MX', {
+      dateStyle: 'long',
+      timeStyle: 'short'
+    }).format(new Date(timestamp * 1000));
+  }
+
+  function showOxxoVoucher(paymentIntent?: StripePaymentIntent) {
+    const details = paymentIntent?.next_action?.oxxo_display_details;
+
+    if (!details?.number) {
+      setStatus('Stripe generó el pago, pero no regresó la referencia OXXO. Revisa el Dashboard de Stripe.');
+      return;
+    }
+
+    if (oxxoReference) oxxoReference.textContent = details.number;
+    if (oxxoExpires) oxxoExpires.textContent = formatOxxoExpiration(details.expires_after);
+    if (details.hosted_voucher_url && oxxoVoucherLink) {
+      oxxoVoucherLink.href = details.hosted_voucher_url;
+      oxxoVoucherLink.hidden = false;
+    }
+    if (oxxoVoucherPanel) oxxoVoucherPanel.hidden = false;
+    setStatus('Referencia OXXO generada. El pedido queda pendiente hasta que Stripe confirme el pago.');
   }
 
   async function prepareStripePayment(payload: CheckoutPayload) {
@@ -302,6 +390,13 @@ import { whatsappHref } from '../content/site';
         return;
       }
 
+      preparedClientSecret = result.clientSecret;
+
+      if (result.paymentMethod === 'oxxo') {
+        await confirmOxxoVoucher(payload, result.clientSecret);
+        return;
+      }
+
       elements = stripe.elements({
         clientSecret: result.clientSecret,
         appearance: getAppearance()
@@ -320,16 +415,55 @@ import { whatsappHref } from '../content/site';
       getWindowHelpers().trackLandingEvent?.('stripe_payment_intent_ready', {
         version: result.version.id,
         amount: result.amount,
-        currency: result.currency
+        currency: result.currency,
+        paymentMethod: result.paymentMethod,
+        livemode: result.livemode
       });
     } catch {
       setStatus('No se pudo conectar con Stripe en este momento.');
-      setSubmitState(false, 'Preparar pago');
+      setSubmitState(false);
+    }
+  }
+
+  async function confirmOxxoVoucher(payload: CheckoutPayload, clientSecret: string) {
+    if (!stripe) {
+      setStatus('No se pudo inicializar Stripe para OXXO. Intenta de nuevo.');
+      setSubmitState(false);
+      return;
+    }
+
+    setSubmitState(true, 'Generando referencia...');
+
+    const billingDetails = buildBillingDetails(payload);
+
+    try {
+      const result = await stripe.confirmOxxoPayment(clientSecret, {
+        payment_method: {
+          billing_details: billingDetails
+        }
+      });
+
+      if (result.error) {
+        setStatus(result.error.message || 'No se pudo generar la referencia OXXO.');
+        setSubmitState(false);
+        return;
+      }
+
+      getWindowHelpers().trackLandingEvent?.('stripe_oxxo_reference_ready', {
+        paymentIntentId: result.paymentIntent?.id,
+        status: result.paymentIntent?.status
+      });
+
+      showOxxoVoucher(result.paymentIntent);
+      setSubmitState(false, 'Generar otra referencia');
+    } catch {
+      setStatus('No se pudo generar la referencia OXXO en este momento.');
+      setSubmitState(false);
     }
   }
 
   async function confirmStripePayment(payload: CheckoutPayload) {
-    if (!stripe || !elements) {
+    if (!stripe || !elements || !preparedClientSecret) {
       clearPreparedPayment('Prepara el pago nuevamente.');
       return;
     }
@@ -454,7 +588,7 @@ import { whatsappHref } from '../content/site';
     const option = versionSelect.selectedOptions[0];
     selectedVersionLabel.textContent = option?.textContent?.replace(/\s-\s.*/, '') || 'Guía Clásica';
     selectedVersionPrice.textContent = option?.dataset.price || '$419 MXN';
-    if (!paymentReady) setSubmitState(false, 'Preparar pago');
+    if (!paymentReady) setSubmitState(false);
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -471,6 +605,10 @@ import { whatsappHref } from '../content/site';
   });
 
   versionSelect?.addEventListener('change', updateSelectedVersion);
+  paymentMethodSelect?.addEventListener('change', () => {
+    clearPreparedPayment();
+    setSubmitState(false);
+  });
 
   form?.addEventListener('input', () => {
     if (!isSubmittingPayment) clearPreparedPayment('Actualizaste datos. Prepara el pago nuevamente.');
