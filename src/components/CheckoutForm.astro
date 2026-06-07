@@ -50,6 +50,18 @@ import { whatsappHref } from '../content/site';
         </div>
       </div>
       <input type="hidden" name="delivery" value="envio-nacional" />
+      <input id="deliveryEstimateWindow" type="hidden" name="deliveryEstimateWindow" />
+      <input id="deliveryEstimateCarrier" type="hidden" name="deliveryEstimateCarrier" />
+
+      <div class="delivery-estimate-card" id="delivery-estimate-card" hidden aria-live="polite">
+        <span class="delivery-estimate-kicker">Fecha estimada</span>
+        <strong id="delivery-estimate-window">Calculando entrega...</strong>
+        <p id="delivery-estimate-detail">Estamos revisando la mejor ruta disponible para tu código postal.</p>
+        <div class="delivery-estimate-meta">
+          <span id="delivery-estimate-carrier">Paquetería por definir</span>
+          <span id="delivery-estimate-cost">Objetivo $120 MXN</span>
+        </div>
+      </div>
 
       <div class="checkout-step">
         <span>2</span>
@@ -145,6 +157,27 @@ import { whatsappHref } from '../content/site';
         ok: false;
         error: string;
       };
+  type DeliveryEstimateResponse =
+    | {
+        ok: true;
+        carrier: string;
+        serviceLabel: string;
+        targetCostMxn: number;
+        shipsOn: string;
+        headline: string;
+        detail: string;
+        delivery: {
+          windowLabel: string;
+          minDate: string;
+          maxDate: string;
+          minBusinessDays: number;
+          maxBusinessDays: number;
+        };
+      }
+    | {
+        ok: false;
+        error: string;
+      };
 
   type CheckoutPayload = Record<string, string>;
   type StripePaymentIntentResponse =
@@ -200,6 +233,13 @@ import { whatsappHref } from '../content/site';
   const postalLookupButton = document.querySelector('#postal-lookup-button') as HTMLButtonElement | null;
   const deliveryDetails = document.querySelector('#delivery-details') as HTMLDivElement | null;
   const deliveryDetailFields = Array.from(document.querySelectorAll('[data-delivery-detail]')) as Array<HTMLInputElement | HTMLSelectElement>;
+  const deliveryEstimateCard = document.querySelector('#delivery-estimate-card') as HTMLDivElement | null;
+  const deliveryEstimateWindow = document.querySelector('#delivery-estimate-window') as HTMLElement | null;
+  const deliveryEstimateDetail = document.querySelector('#delivery-estimate-detail') as HTMLParagraphElement | null;
+  const deliveryEstimateCarrier = document.querySelector('#delivery-estimate-carrier') as HTMLSpanElement | null;
+  const deliveryEstimateCost = document.querySelector('#delivery-estimate-cost') as HTMLSpanElement | null;
+  const deliveryEstimateWindowInput = document.querySelector('#deliveryEstimateWindow') as HTMLInputElement | null;
+  const deliveryEstimateCarrierInput = document.querySelector('#deliveryEstimateCarrier') as HTMLInputElement | null;
   const settlementSelect = document.querySelector('#settlement') as HTMLSelectElement | null;
   const stateInput = document.querySelector('#state') as HTMLInputElement | null;
   const municipalityInput = document.querySelector('#municipality') as HTMLInputElement | null;
@@ -222,6 +262,7 @@ import { whatsappHref } from '../content/site';
   let paymentReady = false;
   let preparedClientSecret = '';
   let isSubmittingPayment = false;
+  let estimateAbortController: AbortController | null = null;
 
   function setStatus(message: string) {
     if (status) status.textContent = message;
@@ -279,6 +320,66 @@ import { whatsappHref } from '../content/site';
     clearOxxoVoucher();
     setSubmitState(false);
     if (message) setStatus(message);
+  }
+
+  function clearDeliveryEstimate() {
+    estimateAbortController?.abort();
+    estimateAbortController = null;
+    if (deliveryEstimateCard) deliveryEstimateCard.hidden = true;
+    if (deliveryEstimateWindowInput) deliveryEstimateWindowInput.value = '';
+    if (deliveryEstimateCarrierInput) deliveryEstimateCarrierInput.value = '';
+  }
+
+  function setDeliveryEstimateLoading() {
+    if (deliveryEstimateCard) deliveryEstimateCard.hidden = false;
+    if (deliveryEstimateWindow) deliveryEstimateWindow.textContent = 'Calculando entrega...';
+    if (deliveryEstimateDetail) deliveryEstimateDetail.textContent = 'Estamos revisando la mejor ruta disponible para tu código postal.';
+    if (deliveryEstimateCarrier) deliveryEstimateCarrier.textContent = 'Paquetería por definir';
+    if (deliveryEstimateCost) deliveryEstimateCost.textContent = 'Objetivo $120 MXN';
+  }
+
+  function renderDeliveryEstimate(result: Extract<DeliveryEstimateResponse, { ok: true }>) {
+    if (deliveryEstimateCard) deliveryEstimateCard.hidden = false;
+    if (deliveryEstimateWindow) deliveryEstimateWindow.textContent = result.delivery.windowLabel;
+    if (deliveryEstimateDetail) deliveryEstimateDetail.textContent = result.detail;
+    if (deliveryEstimateCarrier) deliveryEstimateCarrier.textContent = `${result.carrier} · ${result.serviceLabel}`;
+    if (deliveryEstimateCost) deliveryEstimateCost.textContent = `Objetivo $${result.targetCostMxn} MXN`;
+    if (deliveryEstimateWindowInput) deliveryEstimateWindowInput.value = result.delivery.windowLabel;
+    if (deliveryEstimateCarrierInput) deliveryEstimateCarrierInput.value = result.carrier;
+  }
+
+  async function lookupDeliveryEstimate(cp: string, settlement = '') {
+    if (!/^\d{5}$/.test(cp)) {
+      clearDeliveryEstimate();
+      return false;
+    }
+
+    estimateAbortController?.abort();
+    estimateAbortController = new AbortController();
+    setDeliveryEstimateLoading();
+
+    try {
+      const params = new URLSearchParams({ cp });
+      if (settlement) params.set('settlement', settlement);
+      const response = await fetch(`/api/delivery-estimate?${params.toString()}`, {
+        signal: estimateAbortController.signal
+      });
+      const result = (await response.json()) as DeliveryEstimateResponse;
+
+      if (!response.ok || !result.ok) {
+        clearDeliveryEstimate();
+        setStatus('No pudimos calcular la entrega para ese código postal todavía.');
+        return false;
+      }
+
+      renderDeliveryEstimate(result);
+      return true;
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') return false;
+      clearDeliveryEstimate();
+      setStatus('No se pudo calcular la entrega en este momento.');
+      return false;
+    }
   }
 
   function getAppearance() {
@@ -553,6 +654,7 @@ import { whatsappHref } from '../content/site';
     if (municipalityInput) municipalityInput.value = '';
     setSettlementOptions([], 'Primero escribe tu CP');
     setDeliveryDetailsVisible(false);
+    clearDeliveryEstimate();
   }
 
   async function lookupPostalCode(cp: string) {
@@ -586,6 +688,7 @@ import { whatsappHref } from '../content/site';
       setSettlementOptions(result.settlements);
       setDeliveryDetailsVisible(true);
       setStatus(`${result.settlements.length} colonia(s) encontradas.`);
+      void lookupDeliveryEstimate(cp);
       return true;
     } catch (error) {
       if ((error as Error).name === 'AbortError') return false;
@@ -621,6 +724,10 @@ import { whatsappHref } from '../content/site';
 
   postalLookupButton?.addEventListener('click', () => {
     void lookupPostalCode(postalCodeInput?.value || '');
+  });
+
+  settlementSelect?.addEventListener('change', () => {
+    void lookupDeliveryEstimate(postalCodeInput?.value || '', settlementSelect.value);
   });
 
   versionSelect?.addEventListener('change', updateSelectedVersion);

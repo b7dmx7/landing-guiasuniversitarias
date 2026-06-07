@@ -35,6 +35,8 @@ type CheckoutPayload = {
   whatsapp?: string;
   email?: string;
   terms?: string;
+  deliveryEstimateWindow?: string;
+  deliveryEstimateCarrier?: string;
 };
 
 type PostalCodeRow = {
@@ -44,6 +46,19 @@ type PostalCodeRow = {
   settlement: string;
   settlement_type: string | null;
 };
+
+type DeliveryRuleRow = {
+  carrier: string;
+  service_label: string;
+  min_business_days: number;
+  max_business_days: number;
+  target_cost_mxn: number;
+  cutoff_hour_local: number;
+  notes: string | null;
+};
+
+const DELIVERY_TIME_ZONE = 'America/Mexico_City';
+const DELIVERY_ORIGIN = 'San Nicolás de los Garza, Nuevo León';
 
 function json(data: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(data), {
@@ -94,6 +109,182 @@ function appendStripeParam(params: URLSearchParams, key: string, value: unknown)
   if (cleaned) params.append(key, cleaned);
 }
 
+function getMexicoNowParts(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: DELIVERY_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(date);
+
+  const value = (type: string) => parts.find((part) => part.type === type)?.value || '';
+
+  return {
+    date: `${value('year')}-${value('month')}-${value('day')}`,
+    hour: Number(value('hour')),
+    minute: Number(value('minute'))
+  };
+}
+
+function addCalendarDays(dateString: string, days: number) {
+  const date = new Date(`${dateString}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function isBusinessDay(dateString: string, holidays: Set<string>) {
+  const day = new Date(`${dateString}T12:00:00Z`).getUTCDay();
+  return day !== 0 && day !== 6 && !holidays.has(dateString);
+}
+
+function nextBusinessDay(dateString: string, holidays: Set<string>) {
+  let date = dateString;
+  while (!isBusinessDay(date, holidays)) {
+    date = addCalendarDays(date, 1);
+  }
+  return date;
+}
+
+function addBusinessDays(dateString: string, days: number, holidays: Set<string>) {
+  let date = dateString;
+  let remaining = Math.max(0, days);
+
+  while (remaining > 0) {
+    date = addCalendarDays(date, 1);
+    if (isBusinessDay(date, holidays)) remaining -= 1;
+  }
+
+  return date;
+}
+
+function formatDateForMexico(dateString: string) {
+  return new Intl.DateTimeFormat('es-MX', {
+    timeZone: 'UTC',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  }).format(new Date(`${dateString}T12:00:00Z`));
+}
+
+function formatDeliveryWindow(minDate: string, maxDate: string) {
+  if (minDate === maxDate) return formatDateForMexico(minDate);
+  return `${formatDateForMexico(minDate)} a ${formatDateForMexico(maxDate)}`;
+}
+
+async function getHolidaySet(db: D1Database, startDate: string) {
+  const endDate = addCalendarDays(startDate, 45);
+  const result = await db
+    .prepare(
+      `select holiday_date
+       from delivery_holidays
+       where holiday_date between ? and ?`
+    )
+    .bind(startDate, endDate)
+    .all<{ holiday_date: string }>();
+
+  return new Set(result.results.map((row) => row.holiday_date));
+}
+
+async function findDeliveryRule(db: D1Database, cp: string, state: string) {
+  const cpPrefix3 = cp.slice(0, 3);
+  const cpPrefix2 = cp.slice(0, 2);
+
+  const result = await db
+    .prepare(
+      `select carrier, service_label, min_business_days, max_business_days, target_cost_mxn, cutoff_hour_local, notes
+       from delivery_rules
+       where active = 1
+         and (
+           (match_type = 'cp' and match_value = ?)
+           or (match_type = 'cp_prefix' and match_value in (?, ?))
+           or (match_type = 'state' and match_value = ?)
+           or (match_type = 'national' and match_value = '*')
+         )
+       order by
+         case match_type
+           when 'cp' then 1
+           when 'cp_prefix' then 2
+           when 'state' then 3
+           else 4
+         end,
+         priority asc
+       limit 1`
+    )
+    .bind(cp, cpPrefix3, cpPrefix2, state)
+    .first<DeliveryRuleRow>();
+
+  return result;
+}
+
+async function createDeliveryEstimate(cp: string, settlement: string, env: Env) {
+  if (!env.POSTAL_CODES_DB) {
+    return json({ ok: false, error: 'postal_database_not_configured' }, { status: 503 });
+  }
+
+  const postalResult = await env.POSTAL_CODES_DB
+    .prepare(
+      `select cp, state, municipality, settlement, settlement_type
+       from postal_codes
+       where cp = ?
+       order by case when settlement = ? then 0 else 1 end, settlement asc
+       limit 1`
+    )
+    .bind(cp, settlement)
+    .first<PostalCodeRow>();
+
+  if (!postalResult) {
+    return json({ ok: false, error: 'postal_code_not_found' }, { status: 404 });
+  }
+
+  const rule = await findDeliveryRule(env.POSTAL_CODES_DB, cp, postalResult.state);
+  if (!rule) {
+    return json({ ok: false, error: 'delivery_rule_not_found' }, { status: 404 });
+  }
+
+  const now = getMexicoNowParts();
+  const holidays = await getHolidaySet(env.POSTAL_CODES_DB, now.date);
+  const todayIsBusinessDay = isBusinessDay(now.date, holidays);
+  const beforeCutoff = todayIsBusinessDay && now.hour < rule.cutoff_hour_local;
+  const shipDate = beforeCutoff ? now.date : nextBusinessDay(addCalendarDays(now.date, 1), holidays);
+  const minDate = addBusinessDays(shipDate, rule.min_business_days, holidays);
+  const maxDate = addBusinessDays(shipDate, rule.max_business_days, holidays);
+  const windowLabel = formatDeliveryWindow(minDate, maxDate);
+  const cutoffLabel = `${String(rule.cutoff_hour_local).padStart(2, '0')}:00`;
+  const shipReason = beforeCutoff
+    ? `Si completas tu pedido antes de las ${cutoffLabel}, lo preparamos para salir hoy.`
+    : todayIsBusinessDay
+      ? `Por la hora, la salida se toma el siguiente día hábil.`
+      : `Por fin de semana o día inhábil, la salida se toma el siguiente día hábil.`;
+
+  return json({
+    ok: true,
+    cp,
+    settlement: settlement || postalResult.settlement,
+    state: postalResult.state,
+    municipality: postalResult.municipality,
+    origin: DELIVERY_ORIGIN,
+    carrier: rule.carrier,
+    serviceLabel: rule.service_label,
+    targetCostMxn: rule.target_cost_mxn,
+    cutoffHourLocal: rule.cutoff_hour_local,
+    currentLocalDate: now.date,
+    shipsOn: shipDate,
+    delivery: {
+      minDate,
+      maxDate,
+      minBusinessDays: rule.min_business_days,
+      maxBusinessDays: rule.max_business_days,
+      windowLabel
+    },
+    headline: `Entrega estimada: ${windowLabel}`,
+    detail: `${shipReason} Estimación calculada desde ${DELIVERY_ORIGIN}.`,
+    notes: rule.notes
+  });
+}
+
 async function createStripePaymentIntent(payload: CheckoutPayload, env: Env, request: Request) {
   if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PUBLISHABLE_KEY) {
     return json({ ok: false, error: 'stripe_not_configured' }, { status: 503 });
@@ -132,6 +323,8 @@ async function createStripePaymentIntent(payload: CheckoutPayload, env: Env, req
   params.append('metadata[postal_code]', postalCode);
   params.append('metadata[settlement]', settlement);
   params.append('metadata[whatsapp]', whatsapp);
+  appendStripeParam(params, 'metadata[delivery_estimate_window]', payload.deliveryEstimateWindow);
+  appendStripeParam(params, 'metadata[delivery_estimate_carrier]', payload.deliveryEstimateCarrier);
   appendStripeParam(params, 'metadata[references]', payload.references);
   params.append('shipping[name]', name);
   params.append('shipping[phone]', whatsapp);
@@ -231,6 +424,21 @@ export default {
         });
       } catch {
         return json({ ok: false, error: 'postal_lookup_failed' }, { status: 500 });
+      }
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/delivery-estimate') {
+      const cp = normalizePostalCode(url.searchParams.get('cp'));
+      const settlement = cleanString(url.searchParams.get('settlement'), 180);
+
+      if (!/^\d{5}$/.test(cp)) {
+        return json({ ok: false, error: 'invalid_postal_code' }, { status: 400 });
+      }
+
+      try {
+        return await createDeliveryEstimate(cp, settlement, env);
+      } catch {
+        return json({ ok: false, error: 'delivery_estimate_failed' }, { status: 500 });
       }
     }
 

@@ -527,6 +527,52 @@ textarea { min-height: 116px; resize: vertical; }
 .field-shaded input[readonly] {
   color: var(--muted);
 }
+.delivery-estimate-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(37, 211, 102, 0.34), transparent 42%),
+    linear-gradient(135deg, #0057ff, #003b8f);
+  color: white;
+  box-shadow: 0 22px 58px rgba(0, 87, 255, 0.24);
+}
+.delivery-estimate-card[hidden] {
+  display: none;
+}
+.delivery-estimate-kicker {
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+.delivery-estimate-card strong {
+  font-size: clamp(1.75rem, 8vw, 3.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+.delivery-estimate-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.84);
+  line-height: 1.45;
+}
+.delivery-estimate-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.delivery-estimate-meta span {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-size: 0.84rem;
+  font-weight: 850;
+}
 .checkout-step {
   display: grid;
   grid-template-columns: 36px 1fr;
