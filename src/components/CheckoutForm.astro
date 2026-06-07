@@ -19,49 +19,37 @@ import { whatsappHref } from '../content/site';
         </div>
       </div>
 
-      <div class="form-grid">
+      <div class="form-grid delivery-lookup-grid">
         <div class="field">
           <label for="postalCode">Código postal</label>
           <input id="postalCode" name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" placeholder="Ej. 94290" required />
         </div>
-        <div class="field">
+        <div class="field delivery-lookup-action">
+          <button class="btn btn-secondary" id="postal-lookup-button" type="button">Consultar entrega</button>
+        </div>
+      </div>
+
+      <div class="form-grid delivery-details-grid" id="delivery-details" hidden>
+        <div class="field field-shaded">
           <label for="state">Estado</label>
-          <input id="state" name="state" autocomplete="address-level1" readonly required />
+          <input id="state" name="state" autocomplete="address-level1" readonly required disabled data-delivery-detail />
         </div>
-        <div class="field">
+        <div class="field field-shaded">
           <label for="municipality">Municipio o alcaldía</label>
-          <input id="municipality" name="municipality" autocomplete="address-level2" readonly required />
+          <input id="municipality" name="municipality" autocomplete="address-level2" readonly required disabled data-delivery-detail />
         </div>
-        <div class="field">
+        <div class="field field-shaded">
           <label for="settlement">Colonia o fraccionamiento</label>
-          <select id="settlement" name="settlement" required disabled>
+          <select id="settlement" name="settlement" required disabled data-delivery-detail>
             <option value="">Primero escribe tu CP</option>
           </select>
         </div>
         <div class="field">
           <label for="street">Calle</label>
-          <input id="street" name="street" autocomplete="street-address" required />
-        </div>
-        <div class="field">
-          <label for="externalNumber">Número exterior</label>
-          <input id="externalNumber" name="externalNumber" autocomplete="address-line2" required />
-        </div>
-        <div class="field">
-          <label for="internalNumber">Número interior</label>
-          <input id="internalNumber" name="internalNumber" autocomplete="address-line3" />
-        </div>
-        <div class="field">
-          <label for="delivery">Entrega</label>
-          <select id="delivery" name="delivery" required>
-            <option value="envio-nacional">Envío nacional gratis</option>
-            <option value="entrega-personal">Entrega personal</option>
-          </select>
-        </div>
-        <div class="field full">
-          <label for="references">Referencias</label>
-          <textarea id="references" name="references" placeholder="Entre calles, color de fachada o detalle útil para la entrega"></textarea>
+          <input id="street" name="street" autocomplete="street-address" required disabled data-delivery-detail />
         </div>
       </div>
+      <input type="hidden" name="delivery" value="envio-nacional" />
 
       <div class="checkout-step">
         <span>2</span>
@@ -209,6 +197,9 @@ import { whatsappHref } from '../content/site';
 
   const form = document.querySelector('#checkout-form') as HTMLFormElement | null;
   const postalCodeInput = document.querySelector('#postalCode') as HTMLInputElement | null;
+  const postalLookupButton = document.querySelector('#postal-lookup-button') as HTMLButtonElement | null;
+  const deliveryDetails = document.querySelector('#delivery-details') as HTMLDivElement | null;
+  const deliveryDetailFields = Array.from(document.querySelectorAll('[data-delivery-detail]')) as Array<HTMLInputElement | HTMLSelectElement>;
   const settlementSelect = document.querySelector('#settlement') as HTMLSelectElement | null;
   const stateInput = document.querySelector('#state') as HTMLInputElement | null;
   const municipalityInput = document.querySelector('#municipality') as HTMLInputElement | null;
@@ -538,26 +529,44 @@ import { whatsappHref } from '../content/site';
       settlementSelect.appendChild(item);
     });
 
-    settlementSelect.disabled = options.length === 0;
+    settlementSelect.disabled = deliveryDetails?.hidden !== false || options.length === 0;
+  }
+
+  function setLookupState(isLoading: boolean) {
+    if (!postalLookupButton) return;
+    postalLookupButton.disabled = isLoading;
+    postalLookupButton.textContent = isLoading ? 'Consultando...' : 'Consultar entrega';
+  }
+
+  function setDeliveryDetailsVisible(isVisible: boolean) {
+    if (deliveryDetails) deliveryDetails.hidden = !isVisible;
+    deliveryDetailFields.forEach((field) => {
+      field.disabled = !isVisible;
+    });
+    if (settlementSelect) {
+      settlementSelect.disabled = !isVisible || settlementSelect.options.length <= 1;
+    }
   }
 
   function resetPostalFields() {
     if (stateInput) stateInput.value = '';
     if (municipalityInput) municipalityInput.value = '';
     setSettlementOptions([], 'Primero escribe tu CP');
+    setDeliveryDetailsVisible(false);
   }
 
   async function lookupPostalCode(cp: string) {
-    if (!postalCodeInput || !stateInput || !municipalityInput || !settlementSelect) return;
+    if (!postalCodeInput || !stateInput || !municipalityInput || !settlementSelect) return false;
 
     if (!/^\d{5}$/.test(cp)) {
       resetPostalFields();
-      setStatus('');
-      return;
+      setStatus('Escribe un código postal de 5 dígitos.');
+      return false;
     }
 
     lookupAbortController?.abort();
     lookupAbortController = new AbortController();
+    setLookupState(true);
     setStatus('Buscando colonias...');
 
     try {
@@ -569,17 +578,22 @@ import { whatsappHref } from '../content/site';
       if (!response.ok || !result.ok) {
         resetPostalFields();
         setStatus('Todavía no encontramos ese código postal. Cuando carguemos el catálogo nacional aparecerá aquí.');
-        return;
+        return false;
       }
 
       stateInput.value = result.state;
       municipalityInput.value = result.municipality;
       setSettlementOptions(result.settlements);
+      setDeliveryDetailsVisible(true);
       setStatus(`${result.settlements.length} colonia(s) encontradas.`);
+      return true;
     } catch (error) {
-      if ((error as Error).name === 'AbortError') return;
+      if ((error as Error).name === 'AbortError') return false;
       resetPostalFields();
       setStatus('No se pudo consultar el código postal en este momento.');
+      return false;
+    } finally {
+      setLookupState(false);
     }
   }
 
@@ -601,7 +615,12 @@ import { whatsappHref } from '../content/site';
 
   postalCodeInput?.addEventListener('input', () => {
     postalCodeInput.value = postalCodeInput.value.replace(/\D/g, '').slice(0, 5);
-    window.setTimeout(() => lookupPostalCode(postalCodeInput.value), 160);
+    resetPostalFields();
+    setStatus(postalCodeInput.value.length > 0 && postalCodeInput.value.length < 5 ? 'Escribe un código postal de 5 dígitos.' : '');
+  });
+
+  postalLookupButton?.addEventListener('click', () => {
+    void lookupPostalCode(postalCodeInput?.value || '');
   });
 
   versionSelect?.addEventListener('change', updateSelectedVersion);
@@ -620,6 +639,12 @@ import { whatsappHref } from '../content/site';
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
+
+    if (deliveryDetails?.hidden !== false) {
+      const didLookupPostalCode = await lookupPostalCode(postalCodeInput?.value || '');
+      if (!didLookupPostalCode) return;
+    }
+
     if (!form.reportValidity()) return;
 
     const payload = serializeForm();

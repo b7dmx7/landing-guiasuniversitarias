@@ -504,6 +504,29 @@ textarea { min-height: 116px; resize: vertical; }
 .checkout-form label {
   font-weight: 500;
 }
+.delivery-lookup-grid,
+.delivery-details-grid {
+  display: grid;
+  gap: 12px;
+}
+.delivery-details-grid[hidden] {
+  display: none;
+}
+.delivery-lookup-action {
+  align-self: end;
+}
+.delivery-lookup-action .btn {
+  width: 100%;
+  min-height: 51px;
+}
+.field-shaded input,
+.field-shaded select {
+  background: var(--story-bg);
+  border-color: rgba(0, 71, 171, 0.24);
+}
+.field-shaded input[readonly] {
+  color: var(--muted);
+}
 .checkout-step {
   display: grid;
   grid-template-columns: 36px 1fr;

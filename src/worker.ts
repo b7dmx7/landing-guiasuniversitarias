@@ -81,7 +81,6 @@ function validateCheckout(payload: CheckoutPayload) {
   if (!cleanString(payload.municipality)) errors.push('municipality_required');
   if (!cleanString(payload.settlement)) errors.push('settlement_required');
   if (!cleanString(payload.street)) errors.push('street_required');
-  if (!cleanString(payload.externalNumber)) errors.push('external_number_required');
   if (!cleanString(payload.name, 120) || cleanString(payload.name, 120).length < 2) errors.push('name_required');
   if (!cleanString(payload.whatsapp, 32) || cleanString(payload.whatsapp, 32).length < 8) errors.push('whatsapp_required');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanString(payload.email, 180))) errors.push('email_required');
