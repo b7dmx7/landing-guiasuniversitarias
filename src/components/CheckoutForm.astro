@@ -764,9 +764,17 @@ import { whatsappHref } from '../content/site';
     setStatus(postalCodeInput.value.length > 0 && postalCodeInput.value.length < 5 ? 'Escribe un código postal de 5 dígitos.' : '');
   });
 
-  postalLookupButton?.addEventListener('click', () => {
+  function requestPostalLookup() {
     void lookupPostalCode(postalCodeInput?.value || '');
+  }
+
+  postalCodeInput?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    requestPostalLookup();
   });
+
+  postalLookupButton?.addEventListener('click', requestPostalLookup);
 
   settlementSelect?.addEventListener('change', () => {
     void lookupDeliveryEstimate(postalCodeInput?.value || '', settlementSelect.value);
