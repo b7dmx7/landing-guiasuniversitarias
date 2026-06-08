@@ -28,6 +28,7 @@ import { whatsappHref } from '../content/site';
           <button class="btn btn-secondary" id="postal-lookup-button" type="button">Consultar entrega</button>
         </div>
       </div>
+      <p class="form-status" id="checkout-status" aria-live="polite"></p>
 
       <div class="delivery-estimate-card" id="delivery-estimate-card" hidden aria-live="polite">
         <span class="delivery-estimate-kicker">Fecha estimada</span>
@@ -171,7 +172,6 @@ import { whatsappHref } from '../content/site';
 
       <button class="btn btn-primary" id="checkout-submit" type="submit">Preparar pago</button>
       <a class="btn btn-secondary btn-whatsapp" href={whatsappHref('Hola, quiero ayuda para comprar mi guía.')} onclick="trackLandingEvent('click_whatsapp', {location: 'checkout_form'})">Ayuda por WhatsApp</a>
-      <p class="form-status" id="checkout-status" aria-live="polite"></p>
     </form>
   </div>
 </section>
