@@ -29,6 +29,15 @@ import { whatsappHref } from '../content/site';
         </div>
       </div>
 
+      <div class="delivery-estimate-card" id="delivery-estimate-card" hidden aria-live="polite">
+        <span class="delivery-estimate-kicker">Fecha estimada</span>
+        <strong id="delivery-estimate-window">Calculando entrega...</strong>
+        <p id="delivery-estimate-detail">Estamos revisando la mejor ruta disponible para tu código postal.</p>
+        <div class="delivery-estimate-meta">
+          <span id="delivery-estimate-carrier">Paquetería por definir</span>
+        </div>
+      </div>
+
       <div class="form-grid delivery-details-grid" id="delivery-details" hidden>
         <div class="field field-shaded">
           <label for="state">Estado</label>
@@ -52,15 +61,6 @@ import { whatsappHref } from '../content/site';
       <input type="hidden" name="delivery" value="envio-nacional" />
       <input id="deliveryEstimateWindow" type="hidden" name="deliveryEstimateWindow" />
       <input id="deliveryEstimateCarrier" type="hidden" name="deliveryEstimateCarrier" />
-
-      <div class="delivery-estimate-card" id="delivery-estimate-card" hidden aria-live="polite">
-        <span class="delivery-estimate-kicker">Fecha estimada</span>
-        <strong id="delivery-estimate-window">Calculando entrega...</strong>
-        <p id="delivery-estimate-detail">Estamos revisando la mejor ruta disponible para tu código postal.</p>
-        <div class="delivery-estimate-meta">
-          <span id="delivery-estimate-carrier">Paquetería por definir</span>
-        </div>
-      </div>
 
       <div class="checkout-step">
         <span>2</span>
