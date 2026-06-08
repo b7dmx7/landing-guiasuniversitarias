@@ -53,9 +53,24 @@ import { whatsappHref } from '../content/site';
             <option value="">Primero escribe tu CP</option>
           </select>
         </div>
+      </div>
+
+      <div class="form-grid address-details-grid" id="address-details" hidden>
         <div class="field">
           <label for="street">Calle</label>
-          <input id="street" name="street" autocomplete="street-address" required disabled data-delivery-detail />
+          <input id="street" name="street" autocomplete="address-line1" required disabled data-address-detail />
+        </div>
+        <div class="field">
+          <label for="externalNumber">Número exterior</label>
+          <input id="externalNumber" name="externalNumber" autocomplete="address-line2" required disabled data-address-detail />
+        </div>
+        <div class="field">
+          <label for="internalNumber">Número interior</label>
+          <input id="internalNumber" name="internalNumber" autocomplete="address-line3" disabled data-address-detail />
+        </div>
+        <div class="field full">
+          <label for="references">Referencias</label>
+          <textarea id="references" name="references" placeholder="Entre calles, color de fachada o detalle útil para la entrega" disabled data-address-detail></textarea>
         </div>
       </div>
       <input type="hidden" name="delivery" value="envio-nacional" />
@@ -81,7 +96,15 @@ import { whatsappHref } from '../content/site';
           <span class="field-label" id="paymentMethodLabel">Método de pago</span>
           <div class="payment-method-options" role="radiogroup" aria-labelledby="paymentMethodLabel">
             <label class="payment-method-option">
-              <input type="radio" name="paymentMethod" value="card" checked required />
+              <input type="radio" name="paymentMethod" value="oxxo" checked required />
+              <span class="payment-method-symbol payment-method-symbol-oxxo" aria-hidden="true">OXXO</span>
+              <span>
+                <strong>OXXO Pay</strong>
+                <small>Referencia para pagar en tienda</small>
+              </span>
+            </label>
+            <label class="payment-method-option">
+              <input type="radio" name="paymentMethod" value="card" required />
               <span class="payment-method-symbol payment-method-symbol-card" aria-hidden="true">
                 <svg viewBox="0 0 24 24" focusable="false">
                   <rect x="3" y="5" width="18" height="14" rx="2.5"></rect>
@@ -91,14 +114,6 @@ import { whatsappHref } from '../content/site';
               <span>
                 <strong>Tarjeta bancaria</strong>
                 <small>Crédito o débito</small>
-              </span>
-            </label>
-            <label class="payment-method-option">
-              <input type="radio" name="paymentMethod" value="oxxo" required />
-              <span class="payment-method-symbol payment-method-symbol-oxxo" aria-hidden="true">OXXO</span>
-              <span>
-                <strong>OXXO Pay</strong>
-                <small>Referencia para pagar en tienda</small>
               </span>
             </label>
           </div>
@@ -251,6 +266,8 @@ import { whatsappHref } from '../content/site';
   const postalLookupButton = document.querySelector('#postal-lookup-button') as HTMLButtonElement | null;
   const deliveryDetails = document.querySelector('#delivery-details') as HTMLDivElement | null;
   const deliveryDetailFields = Array.from(document.querySelectorAll('[data-delivery-detail]')) as Array<HTMLInputElement | HTMLSelectElement>;
+  const addressDetails = document.querySelector('#address-details') as HTMLDivElement | null;
+  const addressDetailFields = Array.from(document.querySelectorAll('[data-address-detail]')) as Array<HTMLInputElement | HTMLTextAreaElement>;
   const deliveryEstimateCard = document.querySelector('#delivery-estimate-card') as HTMLDivElement | null;
   const deliveryEstimateWindow = document.querySelector('#delivery-estimate-window') as HTMLElement | null;
   const deliveryEstimateDetail = document.querySelector('#delivery-estimate-detail') as HTMLParagraphElement | null;
@@ -259,9 +276,13 @@ import { whatsappHref } from '../content/site';
   const deliveryEstimateCarrierInput = document.querySelector('#deliveryEstimateCarrier') as HTMLInputElement | null;
   const settlementSelect = document.querySelector('#settlement') as HTMLSelectElement | null;
   const streetInput = document.querySelector('#street') as HTMLInputElement | null;
+  const externalNumberInput = document.querySelector('#externalNumber') as HTMLInputElement | null;
+  const internalNumberInput = document.querySelector('#internalNumber') as HTMLInputElement | null;
+  const referencesTextarea = document.querySelector('#references') as HTMLTextAreaElement | null;
   const stateInput = document.querySelector('#state') as HTMLInputElement | null;
   const municipalityInput = document.querySelector('#municipality') as HTMLInputElement | null;
   const versionSelect = document.querySelector('#version') as HTMLSelectElement | null;
+  const paymentMethodField = document.querySelector('.payment-method-field') as HTMLDivElement | null;
   const paymentMethodInputs = Array.from(document.querySelectorAll('input[name="paymentMethod"]')) as HTMLInputElement[];
   const status = document.querySelector('#checkout-status') as HTMLParagraphElement | null;
   const submitButton = document.querySelector('#checkout-submit') as HTMLButtonElement | null;
@@ -290,6 +311,22 @@ import { whatsappHref } from '../content/site';
     if (!streetInput || streetInput.disabled) return;
     window.setTimeout(() => {
       streetInput.focus();
+    }, 0);
+  }
+
+  function focusSettlementSelect() {
+    if (!settlementSelect || settlementSelect.disabled) return;
+    window.setTimeout(() => {
+      settlementSelect.focus();
+    }, 0);
+  }
+
+  function focusPaymentMethod() {
+    const activePaymentMethod = paymentMethodInputs.find((input) => input.checked) || paymentMethodInputs[0];
+    if (!activePaymentMethod || !paymentMethodField) return;
+    window.setTimeout(() => {
+      paymentMethodField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      activePaymentMethod.focus();
     }, 0);
   }
 
@@ -323,7 +360,7 @@ import { whatsappHref } from '../content/site';
   }
 
   function getSelectedPaymentMethod() {
-    return paymentMethodInputs.find((input) => input.checked)?.value || 'card';
+    return paymentMethodInputs.find((input) => input.checked)?.value || 'oxxo';
   }
 
   function clearOxxoVoucher() {
@@ -691,11 +728,32 @@ import { whatsappHref } from '../content/site';
     }
   }
 
+  function setAddressDetailsVisible(isVisible: boolean) {
+    if (addressDetails) addressDetails.hidden = !isVisible;
+    addressDetailFields.forEach((field) => {
+      field.disabled = !isVisible;
+      if (!isVisible) field.value = '';
+    });
+  }
+
+  function handleAddressEnter(event: KeyboardEvent, nextField?: HTMLInputElement | HTMLTextAreaElement | null) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+
+    if (nextField && !nextField.disabled) {
+      nextField.focus();
+      return;
+    }
+
+    focusPaymentMethod();
+  }
+
   function resetPostalFields() {
     if (stateInput) stateInput.value = '';
     if (municipalityInput) municipalityInput.value = '';
     setSettlementOptions([], 'Primero escribe tu CP');
     setDeliveryDetailsVisible(false);
+    setAddressDetailsVisible(false);
     clearDeliveryEstimate();
   }
 
@@ -729,8 +787,10 @@ import { whatsappHref } from '../content/site';
       municipalityInput.value = result.municipality;
       setSettlementOptions(result.settlements);
       setDeliveryDetailsVisible(true);
+      setAddressDetailsVisible(false);
       setStatus(`${result.settlements.length} colonia(s) encontradas.`);
       void lookupDeliveryEstimate(cp);
+      focusSettlementSelect();
       return true;
     } catch (error) {
       if ((error as Error).name === 'AbortError') return false;
@@ -778,13 +838,32 @@ import { whatsappHref } from '../content/site';
 
   settlementSelect?.addEventListener('change', () => {
     void lookupDeliveryEstimate(postalCodeInput?.value || '', settlementSelect.value);
+    setAddressDetailsVisible(Boolean(settlementSelect.value));
     if (settlementSelect.value) focusStreetInput();
   });
 
   settlementSelect?.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' || !settlementSelect.value) return;
     event.preventDefault();
+    setAddressDetailsVisible(true);
     focusStreetInput();
+  });
+
+  streetInput?.addEventListener('keydown', (event) => {
+    handleAddressEnter(event, externalNumberInput);
+  });
+
+  externalNumberInput?.addEventListener('keydown', (event) => {
+    handleAddressEnter(event, internalNumberInput);
+  });
+
+  internalNumberInput?.addEventListener('keydown', (event) => {
+    handleAddressEnter(event, referencesTextarea);
+  });
+
+  referencesTextarea?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    handleAddressEnter(event);
   });
 
   versionSelect?.addEventListener('change', updateSelectedVersion);
