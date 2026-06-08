@@ -77,12 +77,31 @@ import { whatsappHref } from '../content/site';
             {product.versions.map((version) => <option value={version.id} data-price={version.price}>{version.name} - {version.price}</option>)}
           </select>
         </div>
-        <div class="field">
-          <label for="paymentMethod">Método de pago</label>
-          <select id="paymentMethod" name="paymentMethod" required>
-            <option value="card">Tarjeta bancaria</option>
-            <option value="oxxo">OXXO Pay</option>
-          </select>
+        <div class="field full payment-method-field">
+          <span class="field-label" id="paymentMethodLabel">Método de pago</span>
+          <div class="payment-method-options" role="radiogroup" aria-labelledby="paymentMethodLabel">
+            <label class="payment-method-option">
+              <input type="radio" name="paymentMethod" value="card" checked required />
+              <span class="payment-method-symbol payment-method-symbol-card" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <rect x="3" y="5" width="18" height="14" rx="2.5"></rect>
+                  <path d="M3 10h18M7 15h4"></path>
+                </svg>
+              </span>
+              <span>
+                <strong>Tarjeta bancaria</strong>
+                <small>Crédito o débito</small>
+              </span>
+            </label>
+            <label class="payment-method-option">
+              <input type="radio" name="paymentMethod" value="oxxo" required />
+              <span class="payment-method-symbol payment-method-symbol-oxxo" aria-hidden="true">OXXO</span>
+              <span>
+                <strong>OXXO Pay</strong>
+                <small>Referencia para pagar en tienda</small>
+              </span>
+            </label>
+          </div>
         </div>
         <div class="field">
           <label for="name">Nombre completo</label>
@@ -243,7 +262,7 @@ import { whatsappHref } from '../content/site';
   const stateInput = document.querySelector('#state') as HTMLInputElement | null;
   const municipalityInput = document.querySelector('#municipality') as HTMLInputElement | null;
   const versionSelect = document.querySelector('#version') as HTMLSelectElement | null;
-  const paymentMethodSelect = document.querySelector('#paymentMethod') as HTMLSelectElement | null;
+  const paymentMethodInputs = Array.from(document.querySelectorAll('input[name="paymentMethod"]')) as HTMLInputElement[];
   const status = document.querySelector('#checkout-status') as HTMLParagraphElement | null;
   const submitButton = document.querySelector('#checkout-submit') as HTMLButtonElement | null;
   const paymentPanel = document.querySelector('#stripe-payment-panel') as HTMLDivElement | null;
@@ -300,7 +319,11 @@ import { whatsappHref } from '../content/site';
 
   function getSubmitLabel() {
     if (paymentReady) return 'Pagar ahora';
-    return paymentMethodSelect?.value === 'oxxo' ? 'Generar referencia OXXO' : 'Preparar pago';
+    return getSelectedPaymentMethod() === 'oxxo' ? 'Generar referencia OXXO' : 'Preparar pago';
+  }
+
+  function getSelectedPaymentMethod() {
+    return paymentMethodInputs.find((input) => input.checked)?.value || 'card';
   }
 
   function clearOxxoVoucher() {
@@ -757,10 +780,10 @@ import { whatsappHref } from '../content/site';
   });
 
   versionSelect?.addEventListener('change', updateSelectedVersion);
-  paymentMethodSelect?.addEventListener('change', () => {
+  paymentMethodInputs.forEach((input) => input.addEventListener('change', () => {
     clearPreparedPayment();
     setSubmitState(false);
-  });
+  }));
 
   form?.addEventListener('input', () => {
     if (!isSubmittingPayment) clearPreparedPayment('Actualizaste datos. Prepara el pago nuevamente.');
