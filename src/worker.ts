@@ -319,11 +319,21 @@ async function createStripePaymentIntent(payload: CheckoutPayload, env: Env, req
   }
   params.append('metadata[source]', 'landing_checkout');
   params.append('metadata[version]', version.id);
+  params.append('metadata[version_name]', version.name);
   params.append('metadata[payment_method]', paymentMethod);
   params.append('metadata[delivery]', cleanString(payload.delivery, 80));
-  params.append('metadata[postal_code]', postalCode);
-  params.append('metadata[settlement]', settlement);
+  params.append('metadata[customer_name]', name);
+  params.append('metadata[customer_email]', email);
   params.append('metadata[whatsapp]', whatsapp);
+  params.append('metadata[postal_code]', postalCode);
+  params.append('metadata[state]', state);
+  params.append('metadata[municipality]', municipality);
+  params.append('metadata[settlement]', settlement);
+  params.append('metadata[street]', street);
+  params.append('metadata[external_number]', externalNumber);
+  appendStripeParam(params, 'metadata[internal_number]', internalNumber);
+  params.append('metadata[address_line1]', line1);
+  appendStripeParam(params, 'metadata[address_line2]', line2);
   appendStripeParam(params, 'metadata[delivery_estimate_window]', payload.deliveryEstimateWindow);
   appendStripeParam(params, 'metadata[delivery_estimate_carrier]', payload.deliveryEstimateCarrier);
   appendStripeParam(params, 'metadata[references]', payload.references);

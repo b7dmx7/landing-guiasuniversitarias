@@ -48,7 +48,7 @@ import { whatsappHref } from '../content/site';
           <label for="municipality">Municipio o alcaldía</label>
           <input id="municipality" name="municipality" autocomplete="address-level2" readonly required disabled data-delivery-detail />
         </div>
-        <div class="field field-shaded">
+        <div class="field field-shaded full">
           <label for="settlement">Colonia o fraccionamiento</label>
           <select id="settlement" name="settlement" required disabled data-delivery-detail>
             <option value="">Primero escribe tu CP</option>
@@ -57,15 +57,15 @@ import { whatsappHref } from '../content/site';
       </div>
 
       <div class="form-grid address-details-grid" id="address-details" hidden>
-        <div class="field">
+        <div class="field full">
           <label for="street">Calle</label>
           <input id="street" name="street" autocomplete="address-line1" required disabled data-address-detail />
         </div>
-        <div class="field">
+        <div class="field address-number-field">
           <label for="externalNumber">Número exterior</label>
           <input id="externalNumber" name="externalNumber" autocomplete="address-line2" required disabled data-address-detail />
         </div>
-        <div class="field">
+        <div class="field address-number-field">
           <label for="internalNumber">Número interior</label>
           <input id="internalNumber" name="internalNumber" autocomplete="address-line3" disabled data-address-detail />
         </div>
@@ -87,7 +87,7 @@ import { whatsappHref } from '../content/site';
       </div>
 
       <div class="form-grid">
-        <div class="field">
+        <div class="field full">
           <label for="version">Versión</label>
           <select id="version" name="version" required>
             {product.versions.map((version) => <option value={version.id} data-price={version.price}>{version.name} - {version.price}</option>)}
