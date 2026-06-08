@@ -241,6 +241,7 @@ import { whatsappHref } from '../content/site';
   const deliveryEstimateWindowInput = document.querySelector('#deliveryEstimateWindow') as HTMLInputElement | null;
   const deliveryEstimateCarrierInput = document.querySelector('#deliveryEstimateCarrier') as HTMLInputElement | null;
   const settlementSelect = document.querySelector('#settlement') as HTMLSelectElement | null;
+  const streetInput = document.querySelector('#street') as HTMLInputElement | null;
   const stateInput = document.querySelector('#state') as HTMLInputElement | null;
   const municipalityInput = document.querySelector('#municipality') as HTMLInputElement | null;
   const versionSelect = document.querySelector('#version') as HTMLSelectElement | null;
@@ -266,6 +267,13 @@ import { whatsappHref } from '../content/site';
 
   function setStatus(message: string) {
     if (status) status.textContent = message;
+  }
+
+  function focusStreetInput() {
+    if (!streetInput || streetInput.disabled) return;
+    window.setTimeout(() => {
+      streetInput.focus();
+    }, 0);
   }
 
   function getWindowHelpers() {
@@ -728,6 +736,13 @@ import { whatsappHref } from '../content/site';
 
   settlementSelect?.addEventListener('change', () => {
     void lookupDeliveryEstimate(postalCodeInput?.value || '', settlementSelect.value);
+    if (settlementSelect.value) focusStreetInput();
+  });
+
+  settlementSelect?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || !settlementSelect.value) return;
+    event.preventDefault();
+    focusStreetInput();
   });
 
   versionSelect?.addEventListener('change', updateSelectedVersion);
