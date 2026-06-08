@@ -340,15 +340,30 @@ import { whatsappHref } from '../content/site';
 
   function setDeliveryEstimateLoading() {
     if (deliveryEstimateCard) deliveryEstimateCard.hidden = false;
-    if (deliveryEstimateWindow) deliveryEstimateWindow.textContent = 'Calculando entrega...';
+    renderDeliveryWindow('Calculando entrega...');
     if (deliveryEstimateDetail) deliveryEstimateDetail.textContent = 'Estamos revisando la mejor ruta disponible para tu código postal.';
     if (deliveryEstimateCarrier) deliveryEstimateCarrier.textContent = 'Paquetería por definir';
     if (deliveryEstimateCost) deliveryEstimateCost.textContent = 'Objetivo $120 MXN';
   }
 
+  function renderDeliveryWindow(windowLabel: string) {
+    if (!deliveryEstimateWindow) return;
+
+    deliveryEstimateWindow.innerHTML = '';
+    const dateLines = windowLabel.split(/\s+a\s+/).filter(Boolean);
+    const lines = dateLines.length > 1 ? dateLines : [windowLabel];
+
+    lines.forEach((line) => {
+      const item = document.createElement('span');
+      item.className = 'delivery-estimate-date-line';
+      item.textContent = line;
+      deliveryEstimateWindow.appendChild(item);
+    });
+  }
+
   function renderDeliveryEstimate(result: Extract<DeliveryEstimateResponse, { ok: true }>) {
     if (deliveryEstimateCard) deliveryEstimateCard.hidden = false;
-    if (deliveryEstimateWindow) deliveryEstimateWindow.textContent = result.delivery.windowLabel;
+    renderDeliveryWindow(result.delivery.windowLabel);
     if (deliveryEstimateDetail) deliveryEstimateDetail.textContent = result.detail;
     if (deliveryEstimateCarrier) deliveryEstimateCarrier.textContent = `${result.carrier} · ${result.serviceLabel}`;
     if (deliveryEstimateCost) deliveryEstimateCost.textContent = `Objetivo $${result.targetCostMxn} MXN`;

@@ -530,7 +530,7 @@ textarea { min-height: 116px; resize: vertical; }
 .delivery-estimate-card {
   display: grid;
   gap: 10px;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 22px;
   background:
@@ -550,13 +550,17 @@ textarea { min-height: 116px; resize: vertical; }
   color: rgba(255, 255, 255, 0.78);
 }
 .delivery-estimate-card strong {
-  font-size: clamp(1.75rem, 8vw, 3.2rem);
-  line-height: 0.95;
-  letter-spacing: -0.055em;
+  font-size: clamp(1.35rem, 5.7vw, 2.2rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+.delivery-estimate-date-line {
+  display: block;
 }
 .delivery-estimate-card p {
   margin: 0;
   color: rgba(255, 255, 255, 0.84);
+  font-size: 0.95rem;
   line-height: 1.45;
 }
 .delivery-estimate-meta {
