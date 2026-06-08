@@ -59,7 +59,6 @@ import { whatsappHref } from '../content/site';
         <p id="delivery-estimate-detail">Estamos revisando la mejor ruta disponible para tu código postal.</p>
         <div class="delivery-estimate-meta">
           <span id="delivery-estimate-carrier">Paquetería por definir</span>
-          <span id="delivery-estimate-cost">Objetivo $120 MXN</span>
         </div>
       </div>
 
@@ -237,7 +236,6 @@ import { whatsappHref } from '../content/site';
   const deliveryEstimateWindow = document.querySelector('#delivery-estimate-window') as HTMLElement | null;
   const deliveryEstimateDetail = document.querySelector('#delivery-estimate-detail') as HTMLParagraphElement | null;
   const deliveryEstimateCarrier = document.querySelector('#delivery-estimate-carrier') as HTMLSpanElement | null;
-  const deliveryEstimateCost = document.querySelector('#delivery-estimate-cost') as HTMLSpanElement | null;
   const deliveryEstimateWindowInput = document.querySelector('#deliveryEstimateWindow') as HTMLInputElement | null;
   const deliveryEstimateCarrierInput = document.querySelector('#deliveryEstimateCarrier') as HTMLInputElement | null;
   const settlementSelect = document.querySelector('#settlement') as HTMLSelectElement | null;
@@ -343,7 +341,6 @@ import { whatsappHref } from '../content/site';
     renderDeliveryWindow('Calculando entrega...');
     if (deliveryEstimateDetail) deliveryEstimateDetail.textContent = 'Estamos revisando la mejor ruta disponible para tu código postal.';
     if (deliveryEstimateCarrier) deliveryEstimateCarrier.textContent = 'Paquetería por definir';
-    if (deliveryEstimateCost) deliveryEstimateCost.textContent = 'Objetivo $120 MXN';
   }
 
   function renderDeliveryWindow(windowLabel: string) {
@@ -366,7 +363,6 @@ import { whatsappHref } from '../content/site';
     renderDeliveryWindow(result.delivery.windowLabel);
     if (deliveryEstimateDetail) deliveryEstimateDetail.textContent = result.detail;
     if (deliveryEstimateCarrier) deliveryEstimateCarrier.textContent = `${result.carrier} · ${result.serviceLabel}`;
-    if (deliveryEstimateCost) deliveryEstimateCost.textContent = `Objetivo $${result.targetCostMxn} MXN`;
     if (deliveryEstimateWindowInput) deliveryEstimateWindowInput.value = result.delivery.windowLabel;
     if (deliveryEstimateCarrierInput) deliveryEstimateCarrierInput.value = result.carrier;
   }
